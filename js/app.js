@@ -142,7 +142,7 @@ function cmpText(y, s) {
 function showSample() {
   const y = 'にゅうじょうけん', s = sol(y);
   $('#wKanji').textContent = '入場券'; $('#wYomi').textContent = y;
-  if (s.min < Infinity) { renderGuide($('#guide'), s, [], makePlan(s.start), false); $('#wCmp').textContent = cmpText(y, s); }
+  if (s.min < Infinity) { renderGuide($('#guide'), s, [], makePlan(s.start, [], s), false); $('#wCmp').textContent = cmpText(y, s); }
   else { $('#guide').textContent = ''; $('#wCmp').textContent = 'このテーブルでは入力できない語です'; }
   setNextKey(null);
 }
@@ -257,7 +257,7 @@ function nextWord() {
   G.idx++;
   if (G.idx >= G.words.length) { shuffle(G.words); G.idx = 0; }
   const w = G.words[G.idx];
-  G.w = w; G.s = sol(w.y); G.node = G.s.start; G.typed = []; G.plan = makePlan(G.node); G.curMiss = false;
+  G.w = w; G.s = sol(w.y); G.node = G.s.start; G.typed = []; G.plan = makePlan(G.node, [], G.s); G.curMiss = false;
   $('#wKanji').textContent = w.w; $('#wYomi').textContent = w.y; $('#wCmp').textContent = cmpText(w.y, G.s);
   $('#missInfo').hidden = true;
   draw();
@@ -301,11 +301,11 @@ function onType(c, code = '') {
   }
   $('#missInfo').hidden = true;
   G.st.keys++; G.typed.push(c); G.node = e[1];
-  G.plan = (c === G.plan[0]) ? G.plan.slice(1) : makePlan(G.node);
+  G.plan = (c === G.plan[0]) ? G.plan.slice(1) : makePlan(G.node, [], G.s);
   if (G.node.goal) {
     G.st.words++; G.st.mine += G.s.min;
     const sm = stdMin(G.w.y); G.st.std += sm < Infinity ? sm : G.s.min;
-    if (G.curMiss) G.st.missed.push({ w: G.w.w, g: makePlan(G.s.start).join('') });
+    if (G.curMiss) G.st.missed.push({ w: G.w.w, g: makePlan(G.s.start, [], G.s).join('') });
     if (G.node.b !== '') G.prev = { b: G.node.b, rest: G.s.target.slice(G.node.p) };
     $('#wCount').innerHTML = G.st.words + '<span>単語</span>';
     nextWord();
@@ -464,7 +464,7 @@ function convRender() {
   if (!y) { out.innerHTML = '<div class="cmp">ひらがなを入れると最短の打ち方を表示します</div>'; return; }
   const s = sol(y);
   if (s.min === Infinity) { out.innerHTML = '<div class="cmp ng">このテーブルでは入力できない文字が含まれています</div>'; return; }
-  const g = document.createElement('div'); g.className = 'guide'; renderGuide(g, s, [], makePlan(s.start), false);
+  const g = document.createElement('div'); g.className = 'guide'; renderGuide(g, s, [], makePlan(s.start, [], s), false);
   const c = document.createElement('div'); c.className = 'cmp'; c.textContent = cmpText(y, s);
   out.append(g, c);
 }

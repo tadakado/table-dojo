@@ -152,20 +152,43 @@ export function solve(eng, target) {
     const t = q[i];
     for (const s of rev.get(t) || []) if (s.dist === Infinity) { s.dist = t.dist + 1; q.push(s); }
   }
-  return { start, target, len, min: start.dist, eng };
+  return { start, target, len, min: start.dist, eng, nodes };
 }
 
-/** One shortest key sequence from `node`, following `prefer` as long as it stays shortest. */
-export function makePlan(node, prefer = []) {
+/**
+ * One shortest key sequence from `node`.
+ * Among equally short choices it follows, in order:
+ *   1. `prefer` (what the user has been typing), as long as it stays shortest;
+ *   2. standard romaji, when `sol` is given and plain romaji is among the shortest ways
+ *      (AZIK's `kgo` and `kyo` are both きょ in 3 keys; `kyo` is shown);
+ *   3. the engine's key order.
+ */
+export function makePlan(node, prefer = [], sol = null) {
   const keys = [];
   let cur = node, i = 0, pref = prefer;
+  // Standard romaji typed in parallel: { p, b } in the standard table's graph for the same word.
+  const stdG = sol && sol.eng !== STD ? stdSolution(sol.target) : null;
+  let std = stdG && cur.b === '' ? { p: cur.p, b: '' } : null;
   while (cur.dist > 0 && cur.dist < Infinity) {
-    const want = pref[i];
-    let pick = null;
-    for (const e of cur.edges) if (e[1].dist === cur.dist - 1) { if (e[0] === want) { pick = e; break; } if (!pick) pick = e; }
+    const cands = cur.edges.filter(e => e[1].dist === cur.dist - 1);
+    let pick = cands.find(e => e[0] === pref[i]) || null;
+    if (!pick && std) {
+      const sn = stdG.nodes.get(std.p + '\u0001' + std.b);
+      if (sn && sn.dist < Infinity) {
+        const good = new Set(sn.edges.filter(e => e[1].dist === sn.dist - 1).map(e => e[0]));
+        pick = cands.find(e => good.has(e[0])) || null;
+      }
+    }
+    if (!pick) pick = cands[0];
     if (!pick) break;
-    if (pick[0] !== want) pref = [];
+    if (pick[0] !== pref[i]) pref = [];
+    // advance the parallel standard-romaji state; drop it when this key is not plain romaji
+    if (std) {
+      const [o, nb] = STD.feed(std.b, pick[0]);
+      std = o && sol.target.substr(std.p, o.length) !== o ? null : { p: std.p + o.length, b: nb };
+    }
     keys.push(pick[0]); cur = pick[1]; i++;
+    if (!std && stdG && cur.b === '') std = { p: cur.p, b: '' };   // resync at a commit boundary
   }
   return keys;
 }
@@ -200,12 +223,14 @@ export function chunksOf(sol, seq) {
 /** The built-in standard table, used as the baseline for comparisons. */
 export const STD = new Engine(stdEntries());
 const stdCache = new Map();
-/** Shortest keystrokes with standard romaji. */
-export function stdMin(y) {
+/** Full standard-romaji solution for `y` (cached). */
+export function stdSolution(y) {
   let s = stdCache.get(y);
-  if (s === undefined) { s = solve(STD, y).min; stdCache.set(y, s); }
+  if (!s) { s = solve(STD, y); stdCache.set(y, s); }
   return s;
 }
+/** Shortest keystrokes with standard romaji. */
+export const stdMin = y => stdSolution(y).min;
 
 /** Caches solutions for one table and answers word-level questions. */
 export class Solver {

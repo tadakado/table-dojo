@@ -88,3 +88,17 @@ test('bundled AZIK table (from azooKey) works with the engine', () => {
   const words = parseWords(readFileSync(new URL('../words/basic.tsv', import.meta.url), 'utf8'));
   assert.deepEqual(words.filter(w => solve(az, w.y).min === Infinity).map(w => w.w), []);
 });
+
+test('equally short: standard romaji is preferred over alternative spellings', () => {
+  const az = new Engine(parseTable(readFileSync(new URL('../tables/azik.tsv', import.meta.url), 'utf8')));
+  const shown = y => { const s = solve(az, y); return makePlan(s.start, [], s).join(''); };
+  assert.equal(shown('きょねん'), 'kyond');      // not kgond
+  assert.equal(shown('きょう'), 'kyp');          // not kgp
+  assert.equal(shown('ふね'), 'hune');           // not hfne
+  assert.equal(shown('でんき'), 'ddki');         // not ddkf
+  // A table whose key order would pick the alternative first: `ak` = か ties with `ka`.
+  const odd = new Engine(stdEntries().concat(parseTable('ak\tか\n')));
+  const s = solve(odd, 'かさ');
+  assert.equal(makePlan(s.start).join(''), 'aksa');               // key order alone
+  assert.equal(makePlan(s.start, [], s).join(''), 'kasa');        // standard romaji preferred
+});
