@@ -20,6 +20,10 @@
     <div class="tools">
       <label class="btn" for="fDts">dtsi を開く</label><input class="vh" type="file" id="fDts" accept=".dtsi,.dts,.overlay,.txt">
       <label class="btn" for="fYaml">刻印 YAML</label><input class="vh" type="file" id="fYaml" accept=".yaml,.yml">
+      <form class="webform" id="webForm">
+        <input type="text" id="webSpec" aria-label="GitHub リポジトリか YAML の URL" placeholder="owner/repo または YAML の URL" autocomplete="off" spellcheck="false">
+        <button class="btn" id="webBtn" type="submit">Web から開く</button>
+      </form>
       <label class="f">刻印<select id="selLayer"></select></label>
       <span class="sep"></span>
       <button class="btn" id="bUndo" title="元に戻す (⌘Z)">↶ 戻す</button>

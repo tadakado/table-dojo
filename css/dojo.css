@@ -112,3 +112,9 @@ select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8
 .time-in{width:5.2em;font:inherit;font-family:var(--mono);padding:4px 6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
 .field-label{font-size:.85rem;color:var(--muted)}
 .head-right{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;min-width:0}
+.urlform{display:grid;gap:6px}
+.urlform .row{flex-wrap:nowrap}
+.urlform input[type=text]{min-width:0;flex:1}
+.urlform details{font-size:.8rem;color:var(--muted)}
+.urlform summary{cursor:pointer;width:max-content}
+.urlform details input{margin-top:6px}

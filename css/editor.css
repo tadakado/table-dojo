@@ -53,3 +53,5 @@ textarea{width:100%;min-height:180px;font-family:var(--mono);font-size:.68rem;li
 #axis{stroke:var(--warn);stroke-width:2;stroke-dasharray:10 8}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 .title-row{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline}
+.webform{display:flex;gap:6px;align-items:center;min-width:0}
+.webform input{width:14em;min-width:0;flex:1 1 10em}

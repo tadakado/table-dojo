@@ -1,4 +1,5 @@
 // ZMK physical layout editor (key_physical_attrs). Values are kept in dtsi units: 1u = 100, rotation in degrees.
+import { fetchKeyboard } from './remote.js';
 const $=s=>document.querySelector(s),NS='http://www.w3.org/2000/svg';
 const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 
@@ -229,12 +230,29 @@ $('#fDts').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return
 $('#fYaml').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
   readFile(f,t=>{try{loadYaml(t);LS.set('ple-yaml',t);render();msg('刻印を読み込みました');}catch(err){msg(err.message,true);}});};
 
+/* web: GitHub repo or YAML URL -> layout (dts_layout) + legends */
+function applyKeyboard(layoutText,yamlText,label){
+  keys=parseDts(layoutText);sel.clear();pivot=null;
+  if(yamlText){loadYaml(yamlText);LS.set('ple-yaml',yamlText);}
+  setLegends();
+  {const b=bbox(keys.map((_,i)=>i));if(b){$('#mAxis').value=U((b.x0+b.x1)/2);drawAxis();}}
+  commit();render();fit();msg(`${label} から ${keys.length}キーを読み込みました`);
+}
+$('#webForm').addEventListener('submit',async e=>{
+  e.preventDefault();const spec=$('#webSpec').value.trim(),btn=$('#webBtn');btn.disabled=true;msg('取得中…');
+  try{const kb=await fetchKeyboard(spec,{yaml:window.jsyaml});LS.set('ple-web',spec);applyKeyboard(kb.layoutText,kb.yamlText,kb.source);}
+  catch(err){msg(err.message,true);}
+  finally{btn.disabled=false;}
+});
+
 /* ---------- init ---------- */
 async function fetchText(url){const r=await fetch(url);if(!r.ok)throw new Error(`${url}: ${r.status}`);return r.text();}
 async function boot(){
   let def=null;
   try{const idx=JSON.parse(await fetchText('keyboards/index.json'));const k=idx.keyboards.find(x=>x.id===idx.default)||idx.keyboards[0];
-    if(k){const [y,l]=await Promise.all([fetchText(k.yaml),fetchText(k.layout)]);def={yaml:y,layout:l,name:k.name};}}
+    if(k&&k.repo){try{const kb=await fetchKeyboard(k.repo,{yaml:window.jsyaml});def={yaml:kb.yamlText,layout:kb.layoutText,name:k.name};}catch(e){/* use bundled copy */}}
+    if(k&&!def){const [y,l]=await Promise.all([fetchText(k.yaml),fetchText(k.layout)]);def={yaml:y,layout:l,name:k.name};}
+    if(k&&k.repo)$('#webSpec').value=LS.get('ple-web')||k.repo;}
   catch(e){msg('既定のキーボードを読み込めませんでした（http サーバー経由で開いてください）',true);}
   let saved=null;try{saved=JSON.parse(LS.get('ple-keys')||'null');}catch(e){}
   if(Array.isArray(saved)&&saved.length)keys=saved;

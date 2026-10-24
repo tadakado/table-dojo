@@ -41,16 +41,28 @@ UTF-8 のテキストで、1行に `表記<TAB>よみ`（カンマ区切りも�
 
 ### 自作キーボード
 
-[keymap-drawer](https://github.com/caksoylar/keymap-drawer) の `keymap parse` が出す YAML（刻印）と、配置ファイルを同時に読み込みます。
+刻印は [keymap-drawer](https://github.com/caksoylar/keymap-drawer) の `keymap parse` が出す YAML、配置は ZMK の physical layout（`key_physical_attrs` を含む dtsi）か `keymap draw` が出す SVG から読みます。
+レイヤー名は、そのレイヤーに切り替えるキーの刻印（例: `Lower`）と同じにしておいてください。別レイヤーの文字を「Lower を押しながら」と示すのに使います。
 
-- 配置ファイルは ZMK の physical layout（`key_physical_attrs` を含む dtsi）か、`keymap draw` が出す SVG
-- レイヤー名は、そのレイヤーに切り替えるキーの刻印（例: `Lower`）と同じにしておく。別レイヤーの文字を「押しながら」で示すのに使います
+**Web から読み込む**（「自作キーボード」カードの入力欄、エディタの「Web から開く」）
 
-既定では [tk46v6b](https://github.com/tadakado/tk46v6b) を表示します（`keyboards/` を参照）。
+| 入力 | 取得するもの |
+| --- | --- |
+| `owner/repo`、`owner/repo@branch`、`https://github.com/owner/repo` | `keymap/<repo>.yaml`（なければ `keymap/` 内の YAML）と、その `layout: {dts_layout: …}` が指す dtsi（リポジトリ直下からのパス） |
+| GitHub のファイル URL（`/blob/…` や raw.githubusercontent.com） | その YAML と、`dts_layout` が指す dtsi |
+| その他の https URL | その YAML と、YAML の場所から見た `dts_layout` の dtsi |
+
+YAML に `dts_layout` がない場合は、「配置ファイルの URL を別に指定」に dtsi の URL を入れます。
+読み込んだアドレスは保存され、ページを開くたびに最新を取り直します（取得できないときは前回の取得分を使います）。
+GitHub の raw ファイルは最大5分ほどキャッシュされるので、push 直後は少し待ってください。
+
+**ファイルから読み込む**: YAML と配置ファイルを同時に選ぶかドロップします。
+
+既定では [tk46v6b](https://github.com/tadakado/tk46v6b) を GitHub から取得して表示します。取得できないときは `keyboards/tk46v6b/` の同梱データを使います。
 
 ### 物理配置エディタ
 
-`editor.html` で dtsi を開き、キーをドラッグ・回転・左右鏡映・数値入力で編集して、`keys = …;` ブロックとして書き出します。回転は ZMK と同じく「(rx, ry) を中心に回す」表現のまま計算します。
+`editor.html` で dtsi を開くか、「Web から開く」に GitHub のリポジトリ名を入れて読み込み、キーをドラッグ・回転・左右鏡映・数値入力で編集して、`keys = …;` ブロックとして書き出します。回転は ZMK と同じく「(rx, ry) を中心に回す」表現のまま計算します。
 
 ## ローカルで動かす
 
@@ -81,11 +93,12 @@ css/dojo.css            練習ページ
 css/editor.css          エディタ
 js/engine.js            IME シミュレータ・最短打鍵探索・テーブル/単語の読み込み（DOM 非依存）
 js/keyboard.js          自作キーボード（YAML + dtsi/SVG）の読み込みとキー探索
+js/remote.js            GitHub / URL からの取得（取得先の解決）
 js/app.js               練習ページの画面と進行
 js/editor.js            エディタ
 words/basic.tsv         基本語彙
 keyboards/index.json    選べるキーボードの一覧と既定
-keyboards/tk46v6b/      tk46v6b の刻印 YAML と dtsi
+keyboards/tk46v6b/      tk46v6b の刻印 YAML と dtsi（取得できないときの予備）
 vendor/js-yaml.min.js   YAML パーサ（js-yaml 4.1.0, MIT）
 tests/                  node --test のテスト
 ```
@@ -94,7 +107,7 @@ tests/                  node --test のテスト
 
 `keyboards/<id>/` に YAML と dtsi（または SVG）を置き、`keyboards/index.json` に追加します。`default` が起動時に表示されるキーボード、`base` が既定のベースレイヤー名です。
 
-tk46v6b の YAML は、tk46v6b リポジトリの `keymap/gen.sh` が生成する `keymap/tk46v6b.yaml` のコピーです。キーマップを更新したら、`keymap/tk46v6b.yaml` と `config/boards/shields/tk46v6/tk46v6.dtsi` をここにコピーしてください。
+`repo` を書いておくと、起動時にそのリポジトリから最新を取得し、同梱の `yaml` / `layout` は取得できないときの予備になります。tk46v6b はこの方式なので、キーマップや配置を tk46v6b リポジトリに push すれば、このアプリの更新は不要です。
 
 ## 判定の仕組み
 

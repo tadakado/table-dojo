@@ -3,6 +3,7 @@ import {
   Engine, Solver, STD, stdEntries, stdMin, parseTable, parseWords, makePlan, chunksOf, toHalf, toHira,
 } from './engine.js';
 import { parseKeyboard, legendAt, legendChar, findKey } from './keyboard.js';
+import { fetchKeyboard } from './remote.js';
 
 const $ = s => document.querySelector(s);
 const LS = {
@@ -408,11 +409,13 @@ function convRender() {
 }
 $('#convIn').addEventListener('input', convRender);
 
-/* custom keyboard files */
+/* custom keyboard: files, web, default */
 function ckStatus(h) { $('#ckStatus').innerHTML = h; }
-function setCK(yamlText, layoutText, label, save) {
+function ckError(msg) { ckStatus('<span class="ng"></span>'); $('#ckStatus .ng').textContent = msg; }
+// save: 'file' | 'url' | false (default keyboard, nothing to keep)
+function setCK(yamlText, layoutText, label, save, note = '') {
   try { CK = parseKeyboard(window.jsyaml, yamlText, layoutText, label); }
-  catch (err) { ckStatus('<span class="ng"></span>'); $('#ckStatus .ng').textContent = err.message; return false; }
+  catch (err) { ckError(err.message); return false; }
   const names = CK.layers.map(l => l.name);
   let b = +(LS.get('dojo-ck-base-' + label) ?? NaN);
   if (!(b >= 0 && b < names.length)) {
@@ -426,40 +429,70 @@ function setCK(yamlText, layoutText, label, save) {
   sel.value = b;
   ckStatus('');
   const ok = document.createElement('span'); ok.className = 'ok'; ok.textContent = label;
-  $('#ckStatus').append(ok, ` ・ ${CK.geom.filter(Boolean).length}キー ・ ${names.length}レイヤー`);
+  $('#ckStatus').append(ok, ` ・ ${CK.geom.filter(Boolean).length}キー ・ ${names.length}レイヤー` + (note ? ` ・ ${note}` : ''));
   if (save) { LS.set('dojo-ck-yaml', yamlText); LS.set('dojo-ck-svg', layoutText); LS.set('dojo-ck-name', label); }
+  if (save === 'file') { LS.del('dojo-ck-url'); LS.del('dojo-ck-url-layout'); }
   $('#resetCK').hidden = !save;
   return true;
 }
 function afterCK() { if (kbLayout === 'custom') { buildKb(); if (view === 'game') setNextKey(G.plan[0]); } }
+function useCustomLayout() { kbLayout = 'custom'; LS.set('dojo-kb', 'custom'); LS.set('dojo-kb-manual', '1'); syncSeg(); buildKb(); }
 $('#ckBaseSel').onchange = e => { ckBase = +e.target.value; if (CK) LS.set('dojo-ck-base-' + CK.label, String(ckBase)); afterCK(); };
+
 async function loadCKFiles(files) {
+  ckUser++;
   const fs = [...files];
   const fy = fs.find(f => /\.ya?ml$/i.test(f.name));
   const fv = fs.find(f => /\.(dtsi|dts|overlay)$/i.test(f.name)) || fs.find(f => /\.svg$/i.test(f.name));
   if (!fy && fv && DEF_KB && LS.get('dojo-ck-yaml') == null) {
     // Layout only: keep the default keyboard's legends, swap its geometry.
     const st = await readFile(fv);
-    if (setCK(DEF_KB.yaml, st, DEF_KB.name, false)) { LS.set('dojo-ck-geo', st); $('#resetCK').hidden = false; afterCK(); }
+    if (setCK(DEF_KB.yaml, st, DEF_KB.name, false, `配置: ${fv.name}`)) { LS.set('dojo-ck-geo', st); $('#resetCK').hidden = false; afterCK(); }
     return;
   }
-  if (!fy || !fv) { ckStatus('<span class="ng">YAML と、dtsi か SVG を同時に選んでください</span>'); return; }
+  if (!fy || !fv) { ckError('YAML と、dtsi か SVG を同時に選んでください'); return; }
   const yt = await readFile(fy), st = await readFile(fv);
-  if (setCK(yt, st, fy.name.replace(/\.ya?ml$/i, ''), true)) {
-    kbLayout = 'custom'; LS.set('dojo-kb', 'custom'); LS.set('dojo-kb-manual', '1'); syncSeg(); buildKb();
-  }
+  if (setCK(yt, st, fy.name.replace(/\.ya?ml$/i, ''), 'file')) useCustomLayout();
 }
 $('#fileCK').onchange = e => { loadCKFiles(e.target.files); e.target.value = ''; };
 dropify($('#dropCK'), loadCKFiles);
-function loadDefaultCK() {
+
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, ng) => setTimeout(() => ng(new Error('タイムアウトしました')), ms))]);
+const fetched = () => `${new Date().toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 取得`;
+
+/** Fetch a keyboard from GitHub / a URL and remember the address so it is re-fetched on every visit. */
+async function loadRemote(spec, layoutUrl = '') {
+  ckStatus('取得中…');
+  const kb = await withTimeout(fetchKeyboard(spec, { yaml: window.jsyaml, layoutUrl }), 15000);
+  if (!setCK(kb.yamlText, kb.layoutText, kb.name, 'url', `${kb.source} から${fetched()}`)) return false;
+  LS.set('dojo-ck-url', spec); LS.set('dojo-ck-url-layout', layoutUrl);
+  return true;
+}
+let ckUser = 0;   // bumped on every user action, so a slow boot-time load never overwrites it
+$('#ckUrlForm').addEventListener('submit', async e => {
+  e.preventDefault(); ckUser++;
+  const spec = $('#ckUrl').value.trim(), lu = $('#ckLayoutUrl').value.trim();
+  const btn = $('#ckUrlBtn'); btn.disabled = true;
+  try { if (await loadRemote(spec, lu)) useCustomLayout(); }
+  catch (err) { ckError(err.message); }
+  finally { btn.disabled = false; }
+});
+
+async function loadDefaultCK() {
   if (!DEF_KB) return false;
   const g = LS.get('dojo-ck-geo');
-  if (g && setCK(DEF_KB.yaml, g, DEF_KB.name, false)) { $('#resetCK').hidden = false; return true; }
-  return setCK(DEF_KB.yaml, DEF_KB.layout, DEF_KB.name, false);
+  if (g && setCK(DEF_KB.yaml, g, DEF_KB.name, false, '配置を差し替え中')) { $('#resetCK').hidden = false; return true; }
+  return setCK(DEF_KB.yaml, DEF_KB.layout, DEF_KB.name, false, DEF_KB.note);
 }
-$('#resetCK').onclick = () => {
-  ['dojo-ck-yaml', 'dojo-ck-svg', 'dojo-ck-name', 'dojo-ck-geo'].forEach(k => LS.del(k));
-  loadDefaultCK(); $('#resetCK').hidden = true; afterCK();
+$('#resetCK').onclick = async () => {
+  ckUser++;
+  ['dojo-ck-yaml', 'dojo-ck-svg', 'dojo-ck-name', 'dojo-ck-geo', 'dojo-ck-url', 'dojo-ck-url-layout'].forEach(k => LS.del(k));
+  $('#ckUrl').value = ''; $('#ckLayoutUrl').value = '';
+  if (!DEF_KB) {
+    ckStatus('既定のキーボードを取得中…');
+    try { DEF_KB = await loadDefaultKeyboard(); } catch (err) { ckError('既定のキーボードを読み込めませんでした'); return; }
+  }
+  await loadDefaultCK(); $('#resetCK').hidden = true; afterCK();
 };
 
 /* ---------- boot ---------- */
@@ -468,12 +501,19 @@ async function fetchText(url) {
   if (!r.ok) throw new Error(`${url}: ${r.status}`);
   return r.text();
 }
+/** Default keyboard: latest from its GitHub repository, else the copy bundled in keyboards/. */
 async function loadDefaultKeyboard() {
   const idx = JSON.parse(await fetchText('keyboards/index.json'));
   const k = idx.keyboards.find(x => x.id === idx.default) || idx.keyboards[0];
   if (!k) return null;
+  if (k.repo) {
+    try {
+      const kb = await withTimeout(fetchKeyboard(k.repo, { yaml: window.jsyaml }), 8000);
+      return { ...k, yaml: kb.yamlText, layout: kb.layoutText, note: `${kb.source} から${fetched()}` };
+    } catch (err) { /* offline or not found: use the bundled copy */ }
+  }
   const [yaml, layout] = await Promise.all([fetchText(k.yaml), fetchText(k.layout)]);
-  return { ...k, yaml, layout };
+  return { ...k, yaml, layout, note: '同梱データ' };
 }
 function bootError(err) {
   const d = document.createElement('div'); d.className = 'boot-error';
@@ -496,10 +536,26 @@ async function boot() {
   try { BASIC = parseWords(await fetchText('words/basic.tsv')); }
   catch (err) { bootError(err); }
   wordsLoaded = true;
-  try { DEF_KB = await loadDefaultKeyboard(); }
-  catch (err) { ckStatus('<span class="ng">既定のキーボードを読み込めませんでした</span>'); }
-  const yy = LS.get('dojo-ck-yaml'), ss = LS.get('dojo-ck-svg');
-  if (!(yy && ss && setCK(yy, ss, LS.get('dojo-ck-name') || '自作', true))) loadDefaultCK();
   refreshAll();
+
+  const gen = ckUser;
+  const url = LS.get('dojo-ck-url'), urlLayout = LS.get('dojo-ck-url-layout') || '';
+  const yy = LS.get('dojo-ck-yaml'), ss = LS.get('dojo-ck-svg');
+  if (url) {
+    $('#ckUrl').value = url; $('#ckLayoutUrl').value = urlLayout;
+    let ok = false;
+    try { ok = await loadRemote(url, urlLayout); } catch (err) { /* fall back below */ }
+    if (!ok && yy && ss) ok = setCK(yy, ss, LS.get('dojo-ck-name') || '自作', 'url', '取得できなかったため前回の取得分');
+    if (ok) { afterCK(); return; }
+  } else if (yy && ss && setCK(yy, ss, LS.get('dojo-ck-name') || '自作', 'file', 'ファイルから読み込み')) { afterCK(); return; }
+
+  ckStatus('既定のキーボードを取得中…');
+  let def = null;
+  try { def = await loadDefaultKeyboard(); }
+  catch (err) { if (gen === ckUser) ckError('既定のキーボードを読み込めませんでした'); }
+  if (!DEF_KB) DEF_KB = def;
+  if (gen !== ckUser) return;   // the user loaded something meanwhile
+  await loadDefaultCK();
+  afterCK();
 }
 boot();

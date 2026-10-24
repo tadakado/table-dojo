@@ -91,8 +91,20 @@
         </div>
         <div class="status" id="ckStatus"></div>
       </div>
+      <form class="urlform" id="ckUrlForm">
+        <label class="field-label" for="ckUrl">Web から読み込む</label>
+        <div class="row">
+          <input type="text" id="ckUrl" placeholder="owner/repo または YAML の URL" autocomplete="off" spellcheck="false">
+          <button class="btn ghost" id="ckUrlBtn" type="submit">取得</button>
+        </div>
+        <details>
+          <summary>配置ファイルの URL を別に指定</summary>
+          <input type="text" id="ckLayoutUrl" placeholder="dtsi の URL（YAML の dts_layout を使わない場合）" autocomplete="off" spellcheck="false">
+        </details>
+      </form>
       <div class="row"><label for="ckBaseSel" class="field-label">ベースレイヤー</label><select id="ckBaseSel"></select></div>
-      <p>keymap-drawer の <code>keymap parse</code> が出す YAML（刻印）と、ZMK の physical layout（dtsi）か <code>keymap draw</code> の SVG（配置）を同時に選びます。既定のキーボードのままなら、配置ファイルだけ選んでも差し替わります。レイヤー名をそのレイヤーに切り替えるキーの刻印（例: Lower）と同じにしておくと、別レイヤーの文字は「押しながら」で示します。</p>
+      <p>GitHub のリポジトリ（例: <code>tadakado/tk46v6b</code>）を入れると、<code>keymap/</code> の刻印 YAML と、その <code>layout: {dts_layout: …}</code> が指す dtsi を取得します。開くたびに最新を取り直します。</p>
+      <p>ファイルから読む場合は、keymap-drawer の <code>keymap parse</code> が出す YAML（刻印）と、dtsi か <code>keymap draw</code> の SVG（配置）を同時に選びます。レイヤー名をそのレイヤーに切り替えるキーの刻印（例: Lower）と同じにしておくと、別レイヤーの文字は「押しながら」で示します。</p>
     </section>
     <section class="card">
       <h2>自分の単語リスト</h2>
