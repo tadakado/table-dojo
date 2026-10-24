@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ZMK 物理配置エディタ</title>
+<meta name="description" content="ZMK の physical layout（key_physical_attrs）をドラッグ・回転・鏡映で編集して dtsi に書き出すエディタ">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title-row">
+      <h1>ZMK 物理配置エディタ<small>key_physical_attrs</small></h1>
+      <nav class="nav" aria-label="ページ"><a href="./">練習</a><a href="editor.html" aria-current="page">配置エディタ</a></nav>
+    </div>
+    <div class="tools">
+      <label class="btn" for="fDts">dtsi を開く</label><input class="vh" type="file" id="fDts" accept=".dtsi,.dts,.overlay,.txt">
+      <label class="btn" for="fYaml">刻印 YAML</label><input class="vh" type="file" id="fYaml" accept=".yaml,.yml">
+      <label class="f">刻印<select id="selLayer"></select></label>
+      <span class="sep"></span>
+      <button class="btn" id="bUndo" title="元に戻す (⌘Z)">↶ 戻す</button>
+      <button class="btn" id="bRedo" title="やり直す (⇧⌘Z)">↷ やり直す</button>
+      <button class="btn" id="bFit">全体表示</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="canvas">
+      <svg id="svg" xmlns="http://www.w3.org/2000/svg">
+        <g id="gGrid"></g><line id="axis"></line><g id="gKeys"></g>
+        <g id="pivot"><line id="pvh"></line><line id="pvv"></line><circle r="10"></circle></g>
+        <rect id="band" width="0" height="0" visibility="hidden"></rect>
+      </svg>
+      <div class="hud" id="hud"></div>
+    </div>
+
+    <div class="side">
+      <section class="panel">
+        <h2 id="selTitle">選択なし</h2>
+        <div class="grid7" id="props">
+          <label class="fld"><span>x (u)</span><input type="number" id="px" step="0.05"></label>
+          <label class="fld"><span>y (u)</span><input type="number" id="py" step="0.05"></label>
+          <label class="fld"><span>w (u)</span><input type="number" id="pw" step="0.25" min="0.25"></label>
+          <label class="fld"><span>h (u)</span><input type="number" id="ph" step="0.25" min="0.25"></label>
+          <label class="fld"><span>回転 (°)</span><input type="number" id="pr" step="1"></label>
+          <label class="fld"><span>—</span><span style="font-family:var(--body);font-size:.72rem;padding-top:6px">回転中心</span></label>
+          <label class="fld"><span>rx (u)</span><input type="number" id="prx" step="0.05"></label>
+          <label class="fld"><span>ry (u)</span><input type="number" id="pry" step="0.05"></label>
+        </div>
+        <p id="propNote">キーをクリックして選択。複数選択では x / y は選択範囲の左上、回転は選択全体を剛体として回します。</p>
+      </section>
+
+      <section class="panel">
+        <h2>移動・回転</h2>
+        <div class="row">
+          <label class="f">グリッド<select id="selSnap"><option value="5">0.05u</option><option value="12.5">0.125u</option><option value="25" selected>0.25u</option><option value="50">0.5u</option><option value="100">1u</option></select></label>
+          <label class="f">回転刻み<select id="selRot"><option value="1">1°</option><option value="5" selected>5°</option><option value="15">15°</option></select></label>
+        </div>
+        <div class="row">
+          <button class="btn" id="bRotL">⟲ 左回転</button>
+          <button class="btn" id="bRotR">⟳ 右回転</button>
+          <button class="btn" id="bPivot">中心を選択の中央へ</button>
+        </div>
+        <p>橙の丸が回転中心です。ドラッグで動かせます。</p>
+      </section>
+
+      <section class="panel">
+        <h2>左右の鏡映</h2>
+        <div class="row">
+          <label class="f">列数<input type="number" id="mCols" value="12" min="2" step="1" style="width:4.5em"></label>
+          <label class="f">軸 x (u)<input type="number" id="mAxis" value="6" step="0.25" style="width:5.5em"></label>
+        </div>
+        <div class="row">
+          <button class="btn" id="bMirror">選択を反対側へ写す</button>
+          <button class="btn" id="bAxisAuto">軸を全体の中央に</button>
+        </div>
+        <p>keypos が行優先（行×列数）で並んでいる前提で、列 c を 列数−1−c に対応させます。破線が鏡映軸です。</p>
+      </section>
+
+      <section class="panel">
+        <h2>書き出し</h2>
+        <textarea id="out" readonly spellcheck="false"></textarea>
+        <div class="row"><button class="btn primary" id="bCopy">コピー</button><span class="msg" id="msg"></span></div>
+        <p>physical_layout ノードの <code>keys</code> プロパティをこの内容で置き換えます。</p>
+      </section>
+
+      <section class="panel keys">
+        <kbd>クリック</kbd><span>選択（⇧で追加）／空白をドラッグで範囲選択</span>
+        <kbd>← ↑ → ↓</kbd><span>グリッド単位で移動（⇧で4倍、⌥で0.01u）</span>
+        <kbd>R / ⇧R</kbd><span>右回転 / 左回転</span>
+        <kbd>⌥ドラッグ</kbd><span>グリッドに吸着しない</span>
+        <kbd>⌘A</kbd><span>すべて選択</span>
+        <kbd>⌘Z</kbd><span>元に戻す（⇧⌘Z でやり直し）</span>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ES modules do not load from file://; tell the user how to open the page instead.
+  if (location.protocol === 'file:') document.addEventListener('DOMContentLoaded', () => {
+    const d = document.createElement('div'); d.className = 'boot-error';
+    d.innerHTML = 'ファイルを直接開くと動きません。このフォルダで <code>python3 -m http.server</code> を実行し、<code>http://localhost:8000/</code> を開いてください。';
+    document.body.prepend(d);
+  });
+</script>
+<script src="vendor/js-yaml.min.js"></script>
+<script type="module" src="js/editor.js"></script>
+</body>
+</html>

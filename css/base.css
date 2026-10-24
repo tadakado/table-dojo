@@ -1,0 +1,32 @@
+/* Shared color and type tokens for both pages (light first, dark via OS or data-theme) */
+:root{
+  --bg:#eceee9; --surface:#f8f9f5; --sunk:#e2e5de; --ink:#1c2220; --muted:#5f6864; --line:#d0d5cc; --grid:#dde1d8;
+  --accent:#2848c9; --accent-soft:#dfe5fb; --on-accent:#ffffff;
+  --ok:#16794b; --miss:#c23b2a; --miss-soft:#f7dfda; --warn:#b5541c; --none:#c9cec4;
+  --display:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141716; --surface:#1c201e; --sunk:#242927; --ink:#e4e8e4; --muted:#939c97; --line:#343a37; --grid:#232826;
+  --accent:#8aa2ff; --accent-soft:#252f58; --on-accent:#0e1430;
+  --ok:#5fd09a; --miss:#ff8a78; --miss-soft:#4a2520; --warn:#f0a070; --none:#3a403d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141716; --surface:#1c201e; --sunk:#242927; --ink:#e4e8e4; --muted:#939c97; --line:#343a37; --grid:#232826;
+  --accent:#8aa2ff; --accent-soft:#252f58; --on-accent:#0e1430;
+  --ok:#5fd09a; --miss:#ff8a78; --miss-soft:#4a2520; --warn:#f0a070; --none:#3a403d; color-scheme:dark}
+
+/* minimal reset (pages are served as-is, without a host skeleton) */
+[hidden]{display:none!important}
+body{margin:0}
+img,svg{max-width:100%}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+
+/* page switcher shown in both headers */
+.nav{display:flex;gap:4px;font-size:.82rem}
+.nav a{color:var(--muted);text-decoration:none;padding:3px 10px;border-radius:7px;border:1px solid transparent}
+.nav a:hover{color:var(--ink);border-color:var(--line)}
+.nav a[aria-current="page"]{color:var(--ink);background:var(--surface);border-color:var(--line);font-weight:500}
+.nav a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.boot-error{max-width:640px;margin:24px auto;padding:14px 16px;border:1px solid var(--miss);border-radius:10px;color:var(--ink);background:var(--miss-soft);font-size:.9rem}
+.boot-error code{font-family:var(--mono)}

@@ -1,0 +1,13 @@
+{
+  "default": "tk46v6b",
+  "keyboards": [
+    {
+      "id": "tk46v6b",
+      "name": "tk46v6b",
+      "base": "JA",
+      "yaml": "keyboards/tk46v6b/tk46v6b.yaml",
+      "layout": "keyboards/tk46v6b/tk46v6.dtsi",
+      "source": "https://github.com/tadakado/tk46v6b"
+    }
+  ]
+}
