@@ -87,6 +87,15 @@ python3 -m http.server 8000
 # http://localhost:8000/
 ```
 
+## 単一ファイル版
+
+```sh
+npm run build   # node tools/build-single.mjs
+```
+
+`dist/table-dojo.html`（練習）と `dist/table-dojo-editor.html`（配置エディタ）ができます。CSS・JavaScript・js-yaml・単語リスト・AZIK テーブル・既定のキーボードをすべて1つの HTML に埋め込んであり、サーバーなしでファイルを直接開いて使えます（ネットにつながっていなくても動きます）。
+ネットにつながっていれば、フォントと、GitHub からのキーボード取得はそのまま使えます。設定はブラウザに保存されますが、Pages 版とは別のサイト扱いなので共有はされません。
+
 ## テスト
 
 判定ロジック（`js/engine.js`）は DOM に依存しないので、Node.js でテストできます。
@@ -112,7 +121,7 @@ js/app.js               練習ページの画面と進行
 js/editor.js            エディタ
 words/basic.tsv         基本語彙
 tables/azik.tsv         AZIK テーブル（azooKey から変換）
-tools/                  azik-from-azookey.mjs（AZIK テーブルの変換）
+tools/                  azik-from-azookey.mjs（AZIK テーブルの変換）、build-single.mjs（単一ファイル版の生成）
 keyboards/index.json    選べるキーボードの一覧と既定
 keyboards/tk46v6b/      tk46v6b の刻印 YAML と dtsi（取得できないときの予備）
 vendor/js-yaml.min.js   YAML パーサ（js-yaml 4.1.0, MIT）
