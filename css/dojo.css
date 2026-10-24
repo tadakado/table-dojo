@@ -119,7 +119,5 @@ select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8
 .urlform details{font-size:.8rem;color:var(--muted)}
 .urlform summary{cursor:pointer;width:max-content}
 .urlform details input{margin-top:6px}
-.card h3{font-size:.88rem;margin:4px 0 0;font-weight:700}
 .card p a{color:var(--accent)}
 .status.ng{color:var(--miss);font-weight:500}
-.card-seg{justify-content:flex-start}

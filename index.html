@@ -42,7 +42,7 @@
 
     <div id="idlePanel" class="start">
       <div class="controls">
-        <div class="seg">テーブル<div id="segTable" class="table-seg"><button data-v="std">ローマ字</button><button data-v="azik">AZIK</button><button data-v="custom">カスタム</button></div></div>
+        <div class="seg">テーブル<div id="segTable" class="table-seg"><button data-v="std" title="標準のローマ字（Google 日本語入力の初期設定に近いもの）">ローマ字</button><button data-v="azik" title="azooKey の AZIK テーブル（MIT License）。長音は :、促音は ; で打ちます">AZIK</button><button data-v="custom">カスタム</button></div></div>
         <div class="seg">時間<div id="segTime"><button data-v="30">30秒</button><button data-v="60">60秒</button><button data-v="120">120秒</button></div><input type="number" id="timeIn" min="5" max="3600" step="5" aria-label="制限時間（秒）" class="time-in">秒</div>
         <div class="seg">判定<div id="segStrict"><button data-v="1">最短のみ</button><button data-v="0">どの打ち方も可</button></div></div>
         <div class="seg">配列<div id="segKb"><button data-v="us">US</button><button data-v="jis">JIS</button><button data-v="custom">自作</button></div></div>
@@ -51,6 +51,7 @@
       </div>
       <button class="btn" id="startBtn">練習を始める</button>
       <div class="hint"><kbd>Space</kbd> で開始 ・ <kbd>Esc</kbd> で中断 ・ 英数入力（IMEオフ）で打ってください</div>
+      <div class="hint status" id="tblStatus"></div>
     </div>
   </section>
 
@@ -59,17 +60,15 @@
   <div class="cards">
     <section class="card" id="tableCard">
       <h2>ローマ字テーブル</h2>
-      <div class="seg card-seg"><div id="segTable2" class="table-seg" role="group" aria-label="ローマ字テーブル"><button data-v="std">ローマ字</button><button data-v="azik">AZIK</button><button data-v="custom">カスタム</button></div></div>
-      <div class="status" id="tblStatus"></div>
-      <div class="status ng" id="tblMsg" role="alert" hidden></div>
-      <p>ここか上の「テーブル」で切り替えます。AZIK は <a href="https://github.com/azooKey/azooKey-Desktop" target="_blank" rel="noopener">azooKey</a> の AZIK テーブル（MIT License）を変換して同梱したものです。長音は <code>:</code>、促音は <code>;</code> で打ちます。</p>
-      <h3>カスタム（自分のテーブル）</h3>
+      <p>自分のテーブル（カスタム）を読み込みます。読み込むと、上の「テーブル」で「カスタム」を選べます。</p>
       <div class="drop" id="drop">
         <div class="row">
           <label class="btn ghost" for="fileTable">ファイルを選択</label>
           <input class="vh" type="file" id="fileTable" accept=".tsv,.txt,text/plain,text/tab-separated-values">
           <button class="btn ghost" id="clearTable" hidden>削除</button>
         </div>
+        <div class="status" id="customStatus">未登録</div>
+        <div class="status ng" id="tblMsg" role="alert" hidden></div>
       </div>
       <ol>
         <li>Google日本語入力の設定 → 一般 → ローマ字テーブル「編集…」を開く</li>
