@@ -16,7 +16,7 @@
     <h1>テーブル打鍵道場<small>for AZIK &amp; custom romaji</small></h1>
     <div class="head-right">
       <nav class="nav" aria-label="ページ"><a href="./" aria-current="page">練習</a><a href="editor.html">配置エディタ</a></nav>
-      <div class="chip"><span class="dot"></span>テーブル: <b id="tblName">標準ローマ字（既定）</b></div>
+      <div class="chip"><span class="dot"></span>テーブル: <b id="tblName">ローマ字</b></div>
     </div>
   </header>
 
@@ -42,6 +42,7 @@
 
     <div id="idlePanel" class="start">
       <div class="controls">
+        <div class="seg">テーブル<div id="segTable"><button data-v="std">ローマ字</button><button data-v="azik">AZIK</button><button data-v="custom" id="btnCustomTable">カスタム</button></div></div>
         <div class="seg">時間<div id="segTime"><button data-v="30">30秒</button><button data-v="60">60秒</button><button data-v="120">120秒</button></div><input type="number" id="timeIn" min="5" max="3600" step="5" aria-label="制限時間（秒）" class="time-in">秒</div>
         <div class="seg">判定<div id="segStrict"><button data-v="1">最短のみ</button><button data-v="0">どの打ち方も可</button></div></div>
         <div class="seg">配列<div id="segKb"><button data-v="us">US</button><button data-v="jis">JIS</button><button data-v="custom">自作</button></div></div>
@@ -58,13 +59,16 @@
   <div class="cards">
     <section class="card" id="tableCard">
       <h2>ローマ字テーブル</h2>
+      <div class="status" id="tblStatus"></div>
+      <div class="status ng" id="tblMsg" role="alert" hidden></div>
+      <p>上の「テーブル」で、ローマ字・AZIK・カスタムを切り替えます。AZIK は <a href="https://github.com/toriwasa/azik-roman-table" target="_blank" rel="noopener">toriwasa/azik-roman-table</a> のテーブルを GitHub から取得して使います（一度取得するとブラウザに保存されます）。</p>
+      <h3>カスタム（自分のテーブル）</h3>
       <div class="drop" id="drop">
         <div class="row">
           <label class="btn ghost" for="fileTable">ファイルを選択</label>
           <input class="vh" type="file" id="fileTable" accept=".tsv,.txt,text/plain,text/tab-separated-values">
-          <button class="btn ghost" id="resetTable">標準に戻す</button>
+          <button class="btn ghost" id="clearTable" hidden>削除</button>
         </div>
-        <div class="status" id="tblStatus"></div>
       </div>
       <ol>
         <li>Google日本語入力の設定 → 一般 → ローマ字テーブル「編集…」を開く</li>

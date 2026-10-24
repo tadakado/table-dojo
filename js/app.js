@@ -1,6 +1,6 @@
 // Practice page: UI, game loop, settings. Logic lives in engine.js / keyboard.js.
 import {
-  Engine, Solver, STD, stdEntries, stdMin, parseTable, parseWords, makePlan, chunksOf, toHalf, toHira,
+  Engine, Solver, STD, stdMin, parseTable, parseWords, makePlan, chunksOf, toHalf, toHira,
 } from './engine.js';
 import { parseKeyboard, legendAt, legendChar, findKey } from './keyboard.js';
 import { fetchKeyboard } from './remote.js';
@@ -14,8 +14,18 @@ const LS = {
 const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
 /* ---------- state ---------- */
-const STD_LABEL = '標準ローマ字（既定）';
-let solver = new Solver(STD), tblLabel = STD_LABEL;
+const STD_LABEL = 'ローマ字';
+let solver = new Solver(STD), tblLabel = STD_LABEL, tblNote = '標準';
+// Preset tables. AZIK is not bundled (the source repository has no license),
+// so the viewer's browser fetches it from GitHub and keeps a copy for offline use.
+const PRESETS = {
+  azik: {
+    label: 'AZIK',
+    url: 'https://raw.githubusercontent.com/toriwasa/azik-roman-table/main/azik_romantable.txt',
+    source: 'toriwasa/azik-roman-table',
+  },
+};
+let tableMode = LS.get('dojo-table-mode') || (LS.get('dojo-table') ? 'custom' : 'std');
 let BASIC = [];            // words/basic.tsv
 let wordsLoaded = false;
 let DEF_KB = null;         // { id, name, base, yaml, layout } from keyboards/index.json
@@ -32,17 +42,51 @@ const sol = y => solver.sol(y);
 
 /* ---------- table ---------- */
 function showTblStatus(h) { $('#tblStatus').innerHTML = h; }
-function setTable(entries, label, save, raw) {
-  if (entries.length < 5) {
+function showTblMsg(text) { const m = $('#tblMsg'); m.textContent = text || ''; m.hidden = !text; }
+function setTable(entries, label, note = '') {   // entries === null: the built-in standard table
+  if (entries !== null && entries.length < 5) {
     showTblStatus('<span class="ng">読み込めませんでした。</span> タブ区切り（入力⇥出力⇥次の入力）の形式か確認してください。');
     return false;
   }
-  solver = new Solver(label === STD_LABEL ? STD : new Engine(entries));
-  tblLabel = label;
-  if (save) { LS.set('dojo-table', raw); LS.set('dojo-table-name', label); }
+  solver = new Solver(entries === null ? STD : new Engine(entries));
+  tblLabel = label; tblNote = note;
   $('#tblName').textContent = label;
   refreshAll();
   return true;
+}
+let tableGen = 0;
+/** Switch between the standard table, a preset (AZIK) and the user's own table. */
+async function applyTable(mode) {
+  const gen = ++tableGen, prev = tableMode;
+  tableMode = mode; syncSeg(); showTblMsg('');
+  if (mode === 'std') { setTable(null, STD_LABEL, '標準'); }
+  else if (mode === 'custom') {
+    const raw = LS.get('dojo-table');
+    if (!raw || !setTable(parseTable(raw), LS.get('dojo-table-name') || 'カスタム', 'カスタム')) { tableMode = prev === 'custom' ? 'std' : prev; syncSeg(); return; }
+  } else {
+    const P = PRESETS[mode], cacheKey = 'dojo-preset-' + mode, cached = LS.get(cacheKey);
+    if (cached) setTable(parseTable(cached), P.label, `${P.source}（保存済み）`);   // instant, then refresh
+    else showTblStatus(`${P.label} を ${esc(P.source)} から取得中…`);
+    try {
+      const r = await Promise.race([fetch(P.url, { cache: 'no-cache' }), new Promise((_, ng) => setTimeout(() => ng(new Error('timeout')), 10000))]);
+      if (!r.ok) throw new Error(String(r.status));
+      const text = await r.text();
+      if (gen !== tableGen) return;
+      LS.set(cacheKey, text);
+      if (text !== cached || !cached) setTable(parseTable(text), P.label, `${P.source} から取得`);
+      else { tblNote = `${P.source} から取得`; analyseAsync(); }
+    } catch (err) {
+      if (gen !== tableGen) return;
+      if (cached) { tblNote = `${P.source}（取得できなかったため保存済み）`; analyseAsync(); }
+      else {
+        tableMode = prev === mode ? 'std' : prev; syncSeg();
+        if (tableMode === 'std') setTable(null, STD_LABEL, '標準');
+        showTblMsg(`${P.label} を取得できませんでした。ネットワークを確認してください。`);
+        return;
+      }
+    }
+  }
+  if (gen === tableGen) LS.set('dojo-table-mode', tableMode);
 }
 
 function pool() {
@@ -54,7 +98,7 @@ function pool() {
 let anaGen = 0;
 function analyseAsync() {
   const gen = ++anaGen, list = BASIC.concat(customWords || []);
-  const head = `<span class="ok">${esc(tblLabel)}</span> ・ ${eng().size}項目 ・ `;
+  const head = `<span class="ok">${esc(tblLabel)}</span>${tblNote ? `（${esc(tblNote)}）` : ''} ・ ${eng().size}項目 ・ `;
   if (!wordsLoaded) { showTblStatus(head + '単語を読み込み中…'); return; }
   let i = 0;
   const step = () => {
@@ -345,6 +389,11 @@ function syncSeg() {
   document.querySelectorAll('#segTime button').forEach(b => b.setAttribute('aria-pressed', +b.dataset.v === cfg.time));
   if (document.activeElement !== $('#timeIn')) $('#timeIn').value = cfg.time;
   document.querySelectorAll('#segKb button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === kbLayout));
+  const hasT = !!LS.get('dojo-table');
+  $('#btnCustomTable').disabled = !hasT;
+  $('#btnCustomTable').title = hasT ? (LS.get('dojo-table-name') || '') : '下の「ローマ字テーブル」でファイルを読み込むと選べます';
+  $('#clearTable').hidden = !hasT;
+  document.querySelectorAll('#segTable button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === tableMode));
   document.querySelectorAll('#segStrict button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === cfg.strict));
   const hasC = !!(customWords && customWords.length);
   $('#btnCustomWords').disabled = !hasC;
@@ -354,6 +403,7 @@ function syncSeg() {
 }
 const seg = (id, fn) => { $(id).onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; fn(b.dataset.v); syncSeg(); }; };
 seg('#segTime', v => { cfg.time = +v; LS.set('dojo-time', cfg.time); });
+seg('#segTable', v => { if (v !== tableMode) applyTable(v); });
 seg('#segStrict', v => { cfg.strict = v === '1'; LS.set('dojo-strict', v); });
 seg('#segSkip', v => { cfg.skipPlain = v === '1'; LS.set('dojo-skip', v); });
 seg('#segWords', v => { cfg.words = v; LS.set('dojo-words', v); });
@@ -376,10 +426,18 @@ function dropify(el, fn) {
 }
 
 /* table file */
-async function loadTableFile(files) { const f = files[0], t = await readFile(f); setTable(parseTable(t), f.name, true, t); }
+async function loadTableFile(files) {
+  const f = files[0], t = await readFile(f);
+  if (parseTable(t).length < 5) { showTblMsg(`${f.name} を読み込めませんでした。タブ区切り（入力⇥出力⇥次の入力）の形式か確認してください。`); return; }
+  LS.set('dojo-table', t); LS.set('dojo-table-name', f.name);
+  applyTable('custom');
+}
 $('#fileTable').onchange = e => { if (e.target.files.length) loadTableFile(e.target.files); e.target.value = ''; };
 dropify($('#drop'), loadTableFile);
-$('#resetTable').onclick = () => { LS.del('dojo-table'); LS.del('dojo-table-name'); setTable(stdEntries(), STD_LABEL, false); };
+$('#clearTable').onclick = () => {
+  LS.del('dojo-table'); LS.del('dojo-table-name');
+  if (tableMode === 'custom') applyTable('std'); else syncSeg();
+};
 
 /* word list file */
 async function loadWordsFile(files) {
@@ -524,11 +582,7 @@ function bootError(err) {
 }
 
 async function boot() {
-  const saved = LS.get('dojo-table');
-  if (saved) {
-    const ents = parseTable(saved);
-    if (ents.length >= 5) { solver = new Solver(new Engine(ents)); tblLabel = LS.get('dojo-table-name') || '保存済みテーブル'; $('#tblName').textContent = tblLabel; }
-  }
+  applyTable(tableMode);
   const sw = LS.get('dojo-words-list');
   if (sw) { customWords = parseWords(sw); $('#clearWords').hidden = false; }
   refreshAll();   // usable right away with the sample word

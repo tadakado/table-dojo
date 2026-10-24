@@ -23,9 +23,21 @@ Google 日本語入力からエクスポートしたテーブルを読み込む�
 
 ### ローマ字テーブル
 
+練習ページの「テーブル」で切り替えます。
+
+| 選択 | 使うテーブル |
+| --- | --- |
+| ローマ字 | 同梱の標準ローマ字（Google 日本語入力の初期設定に近いもの） |
+| AZIK | [toriwasa/azik-roman-table](https://github.com/toriwasa/azik-roman-table) の `azik_romantable.txt` を GitHub から取得 |
+| カスタム | 自分で読み込んだテーブル |
+
+AZIK のテーブルは、元のリポジトリにライセンスの記載がないため、このリポジトリには含めていません。選んだときにブラウザが GitHub から直接取得し、取得したものをブラウザに保存します（次回からはすぐ使え、取得できないときも保存分で動きます）。
+
+カスタムは次の手順で読み込みます（ブラウザに保存されます）。
+
 1. Google 日本語入力の設定 → 一般 → ローマ字テーブル「編集…」を開く
 2. 「編集」メニューの「エクスポート」で `.tsv` を保存
-3. 練習ページの「ローマ字テーブル」にドロップ（ブラウザに保存されます）
+3. 練習ページの「ローマ字テーブル」カードにドロップ
 
 形式は 1行1規則の `入力<TAB>出力[<TAB>次の入力]` です。
 
@@ -128,5 +140,6 @@ tests/                  node --test のテスト
 - このリポジトリ: [MIT](LICENSE)
 - [js-yaml](https://github.com/nodeca/js-yaml): MIT（`vendor/js-yaml.LICENSE`）
 - フォント: Google Fonts（Zen Kaku Gothic New、Shippori Mincho B1、JetBrains Mono）を CDN から読み込み
+- AZIK のテーブル: [toriwasa/azik-roman-table](https://github.com/toriwasa/azik-roman-table)（同梱せず、実行時に取得）。AZIK の考案者による解説は [AZIK総合解説書](https://note.com/actbemu/n/n74f1c04c9a2e)
 - 自作キーボードのデータ形式: [keymap-drawer](https://github.com/caksoylar/keymap-drawer)
 - 着想: AZIK 用タイピング練習サイト [TQPU](https://kuroneko2828.github.io/tqpu/)（[紹介記事](https://techbull.cloud/archives/2606)）
