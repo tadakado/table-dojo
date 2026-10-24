@@ -74,12 +74,26 @@
       <p>3列目（次の入力）にも対応しています。<code>kk → っ (k)</code> のような促音規則もそのまま判定に使います。</p>
     </section>
 
-    <section class="card">
-      <h2>変換を試す</h2>
-      <input type="text" id="convIn" placeholder="ひらがなで入力（例: しゅっぱつ）" value="いっしょうけんめい" autocomplete="off">
-      <div class="conv" id="convOut"></div>
-      <p>あなたのテーブルでの最短打鍵と、そのときの区切りを表示します。</p>
-    </section>
+    <div class="col">
+      <section class="card">
+        <h2>変換を試す</h2>
+        <input type="text" id="convIn" placeholder="ひらがなで入力（例: しゅっぱつ）" value="いっしょうけんめい" autocomplete="off">
+        <div class="conv" id="convOut"></div>
+        <p>あなたのテーブルでの最短打鍵と、そのときの区切りを表示します。</p>
+      </section>
+      <section class="card">
+        <h2>自分の単語リスト</h2>
+        <div class="drop" id="dropWords">
+          <div class="row">
+            <label class="btn ghost" for="fileWords">ファイルを選択</label>
+            <input class="vh" type="file" id="fileWords" accept=".tsv,.txt,.csv,text/plain">
+            <button class="btn ghost" id="clearWords" hidden>削除</button>
+          </div>
+          <div class="status" id="wordsStatus">未登録</div>
+        </div>
+        <p>1行に <code>表記⇥よみ</code>（タブかカンマ区切り）。よみだけの行も可。カタカナのよみはひらがなに直して判定します。</p>
+      </section>
+    </div>
 
     <section class="card">
       <h2>自作キーボード</h2>
@@ -105,18 +119,6 @@
       <div class="row"><label for="ckBaseSel" class="field-label">ベースレイヤー</label><select id="ckBaseSel"></select></div>
       <p>GitHub のリポジトリ（例: <code>tadakado/tk46v6b</code>）を入れると、<code>keymap/</code> の刻印 YAML と、その <code>layout: {dts_layout: …}</code> が指す dtsi を取得します。開くたびに最新を取り直します。</p>
       <p>ファイルから読む場合は、keymap-drawer の <code>keymap parse</code> が出す YAML（刻印）と、dtsi か <code>keymap draw</code> の SVG（配置）を同時に選びます。レイヤー名をそのレイヤーに切り替えるキーの刻印（例: Lower）と同じにしておくと、別レイヤーの文字は「押しながら」で示します。</p>
-    </section>
-    <section class="card">
-      <h2>自分の単語リスト</h2>
-      <div class="drop" id="dropWords">
-        <div class="row">
-          <label class="btn ghost" for="fileWords">ファイルを選択</label>
-          <input class="vh" type="file" id="fileWords" accept=".tsv,.txt,.csv,text/plain">
-          <button class="btn ghost" id="clearWords" hidden>削除</button>
-        </div>
-        <div class="status" id="wordsStatus">未登録</div>
-      </div>
-      <p>1行に <code>表記⇥よみ</code>（タブかカンマ区切り）。よみだけの行も可。カタカナのよみはひらがなに直して判定します。</p>
     </section>
   </div>
 </div>
