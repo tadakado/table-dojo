@@ -122,3 +122,4 @@ select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8
 .card h3{font-size:.88rem;margin:4px 0 0;font-weight:700}
 .card p a{color:var(--accent)}
 .status.ng{color:var(--miss);font-weight:500}
+.card-seg{justify-content:flex-start}

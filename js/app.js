@@ -385,10 +385,12 @@ function syncSeg() {
   if (document.activeElement !== $('#timeIn')) $('#timeIn').value = cfg.time;
   document.querySelectorAll('#segKb button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === kbLayout));
   const hasT = !!LS.get('dojo-table');
-  $('#btnCustomTable').disabled = !hasT;
-  $('#btnCustomTable').title = hasT ? (LS.get('dojo-table-name') || '') : '下の「ローマ字テーブル」でファイルを読み込むと選べます';
+  document.querySelectorAll('.table-seg button[data-v="custom"]').forEach(b => {
+    b.disabled = !hasT;
+    b.title = hasT ? (LS.get('dojo-table-name') || '') : '「ローマ字テーブル」カードでファイルを読み込むと選べます';
+  });
   $('#clearTable').hidden = !hasT;
-  document.querySelectorAll('#segTable button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === tableMode));
+  document.querySelectorAll('.table-seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === tableMode));
   document.querySelectorAll('#segStrict button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === cfg.strict));
   const hasC = !!(customWords && customWords.length);
   $('#btnCustomWords').disabled = !hasC;
@@ -399,6 +401,7 @@ function syncSeg() {
 const seg = (id, fn) => { $(id).onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; fn(b.dataset.v); syncSeg(); }; };
 seg('#segTime', v => { cfg.time = +v; LS.set('dojo-time', cfg.time); });
 seg('#segTable', v => { if (v !== tableMode) applyTable(v); });
+seg('#segTable2', v => { if (v !== tableMode) applyTable(v); });
 seg('#segStrict', v => { cfg.strict = v === '1'; LS.set('dojo-strict', v); });
 seg('#segSkip', v => { cfg.skipPlain = v === '1'; LS.set('dojo-skip', v); });
 seg('#segWords', v => { cfg.words = v; LS.set('dojo-words', v); });
