@@ -152,7 +152,7 @@ export function solve(eng, target) {
     const t = q[i];
     for (const s of rev.get(t) || []) if (s.dist === Infinity) { s.dist = t.dist + 1; q.push(s); }
   }
-  return { start, target, len, min: start.dist };
+  return { start, target, len, min: start.dist, eng };
 }
 
 /** One shortest key sequence from `node`, following `prefer` as long as it stays shortest. */
@@ -170,14 +170,26 @@ export function makePlan(node, prefer = []) {
   return keys;
 }
 
-/** Split a key sequence into IME commit units: [{ keys, i (start index), kana }]. */
+/**
+ * Split a key sequence into display units: [{ keys, i (start index), kana }].
+ * A unit ends when the IME buffer empties, and also when pending keys are
+ * committed as they are and the next key starts afresh (a lone `n` for ん
+ * before `d` gives `n|de`, not `nde`).
+ */
 export function chunksOf(sol, seq) {
-  const out = [];
+  const out = [], eng = sol.eng;
   let cur = sol.start, ch = { keys: '', p: 0, i: 0 };
   seq.forEach((c, idx) => {
     const e = cur.edges.find(x => x[0] === c);
     if (!e) return;
-    if (!ch.keys) { ch.p = cur.p; ch.i = idx; }
+    if (ch.keys && cur.b !== '' && eng) {
+      const f = eng.flush(cur.b), [o, nb] = eng.feed(cur.b, c), [o2, nb2] = eng.feed('', c);
+      if (f && o === f + o2 && nb === nb2 && sol.target.substr(ch.p, f.length) === f) {
+        out.push({ keys: ch.keys, i: ch.i, kana: f });
+        ch = { keys: '', p: ch.p + f.length, i: idx };
+      }
+    }
+    if (!ch.keys) { ch.p = ch.p > cur.p ? ch.p : cur.p; ch.i = idx; }
     ch.keys += c; cur = e[1];
     if (cur.b === '') { out.push({ keys: ch.keys, i: ch.i, kana: sol.target.slice(ch.p, cur.p) }); ch = { keys: '', p: cur.p, i: idx + 1 }; }
   });

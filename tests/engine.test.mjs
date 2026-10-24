@@ -70,3 +70,11 @@ test('bundled basic vocabulary is fully typeable with standard romaji', () => {
   const ng = words.filter(w => !/^[ぁ-ゖー]+$/.test(w.y) || stdMin(w.y) === Infinity).map(w => w.w);
   assert.deepEqual(ng, []);
 });
+
+test('display units: a lone n for ん is its own unit', () => {
+  const units = (eng, y) => { const s = solve(eng, y); return chunksOf(s, makePlan(s.start)).map(c => c.keys + ':' + c.kana); };
+  assert.deepEqual(units(STD, 'いしんでんしん'), ['i:い', 'si:し', 'n:ん', 'de:で', 'n:ん', 'si:し', 'n:ん']);
+  assert.deepEqual(units(STD, 'がっこう'), ['ga:が', 'kko:っこ', 'u:う']);   // kk -> っ stays with its kana
+  assert.deepEqual(units(STD, 'こんにちは').join(' '), 'ko:こ nn:ん ni:に ti:ち ha:は');
+  assert.deepEqual(units(AZIK, 'にゅうじょうけん'), ['nyh:にゅう', 'jp:じょう', 'kd:けん']);
+});
