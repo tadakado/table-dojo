@@ -28,10 +28,12 @@ Google 日本語入力からエクスポートしたテーブルを読み込む�
 | 選択 | 使うテーブル |
 | --- | --- |
 | ローマ字 | 同梱の標準ローマ字（Google 日本語入力の初期設定に近いもの） |
-| AZIK | [toriwasa/azik-roman-table](https://github.com/toriwasa/azik-roman-table) の `azik_romantable.txt` を GitHub から取得 |
+| AZIK | 同梱の `tables/azik.tsv`（[azooKey](https://github.com/azooKey/azooKey-Desktop) の AZIK テーブルを変換したもの） |
 | カスタム | 自分で読み込んだテーブル |
 
-AZIK のテーブルは、元のリポジトリにライセンスの記載がないため、このリポジトリには含めていません。選んだときにブラウザが GitHub から直接取得し、取得したものをブラウザに保存します（次回からはすぐ使え、取得できないときも保存分で動きます）。
+AZIK テーブルは、azooKey-Desktop が使っている [AzooKeyKanaKanjiConverter](https://github.com/azooKey/AzooKeyKanaKanjiConverter) の `defaultAzik.swift`（MIT License）を `tools/azik-from-azookey.mjs` で Google 日本語入力の形式に変換したものです。azooKey はキーを「打った記号の全角形」（`;` → `；`、`-` → `ー`、`.` → `。` など）で持っているので、変換時に元のキーに戻しています。長音は `:`、促音は `;` で打ちます（`-` での長音は含まれません）。
+
+元の表を更新したいときは、スクリプト内のコミットを変えて `npm run update-azik` を実行します。
 
 カスタムは次の手順で読み込みます（ブラウザに保存されます）。
 
@@ -109,6 +111,8 @@ js/remote.js            GitHub / URL からの取得（取得先の解決）
 js/app.js               練習ページの画面と進行
 js/editor.js            エディタ
 words/basic.tsv         基本語彙
+tables/azik.tsv         AZIK テーブル（azooKey から変換）
+tools/                  azik-from-azookey.mjs（AZIK テーブルの変換）
 keyboards/index.json    選べるキーボードの一覧と既定
 keyboards/tk46v6b/      tk46v6b の刻印 YAML と dtsi（取得できないときの予備）
 vendor/js-yaml.min.js   YAML パーサ（js-yaml 4.1.0, MIT）
@@ -140,6 +144,6 @@ tests/                  node --test のテスト
 - このリポジトリ: [MIT](LICENSE)
 - [js-yaml](https://github.com/nodeca/js-yaml): MIT（`vendor/js-yaml.LICENSE`）
 - フォント: Google Fonts（Zen Kaku Gothic New、Shippori Mincho B1、JetBrains Mono）を CDN から読み込み
-- AZIK のテーブル: [toriwasa/azik-roman-table](https://github.com/toriwasa/azik-roman-table)（同梱せず、実行時に取得）。AZIK の考案者による解説は [AZIK総合解説書](https://note.com/actbemu/n/n74f1c04c9a2e)
+- AZIK のテーブル: [AzooKeyKanaKanjiConverter](https://github.com/azooKey/AzooKeyKanaKanjiConverter)（MIT, Copyright (c) 2023 Miwa / Ensan, `tables/azik.LICENSE`）。AZIK の考案者による解説は [AZIK総合解説書](https://note.com/actbemu/n/n74f1c04c9a2e)
 - 自作キーボードのデータ形式: [keymap-drawer](https://github.com/caksoylar/keymap-drawer)
 - 着想: AZIK 用タイピング練習サイト [TQPU](https://kuroneko2828.github.io/tqpu/)（[紹介記事](https://techbull.cloud/archives/2606)）

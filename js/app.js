@@ -16,14 +16,9 @@ const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&g
 /* ---------- state ---------- */
 const STD_LABEL = 'ローマ字';
 let solver = new Solver(STD), tblLabel = STD_LABEL, tblNote = '標準';
-// Preset tables. AZIK is not bundled (the source repository has no license),
-// so the viewer's browser fetches it from GitHub and keeps a copy for offline use.
+// Preset tables, bundled in tables/. AZIK is converted from azooKey's table (MIT, see tables/azik.LICENSE).
 const PRESETS = {
-  azik: {
-    label: 'AZIK',
-    url: 'https://raw.githubusercontent.com/toriwasa/azik-roman-table/main/azik_romantable.txt',
-    source: 'toriwasa/azik-roman-table',
-  },
+  azik: { label: 'AZIK', url: 'tables/azik.tsv', source: 'azooKey 版' },
 };
 let tableMode = LS.get('dojo-table-mode') || (LS.get('dojo-table') ? 'custom' : 'std');
 let BASIC = [];            // words/basic.tsv
@@ -65,23 +60,23 @@ async function applyTable(mode) {
     if (!raw || !setTable(parseTable(raw), LS.get('dojo-table-name') || 'カスタム', 'カスタム')) { tableMode = prev === 'custom' ? 'std' : prev; syncSeg(); return; }
   } else {
     const P = PRESETS[mode], cacheKey = 'dojo-preset-' + mode, cached = LS.get(cacheKey);
-    if (cached) setTable(parseTable(cached), P.label, `${P.source}（保存済み）`);   // instant, then refresh
-    else showTblStatus(`${P.label} を ${esc(P.source)} から取得中…`);
+    if (cached) setTable(parseTable(cached), P.label, P.source);   // instant, then refresh
+    else showTblStatus(`${P.label} を読み込み中…`);
     try {
       const r = await Promise.race([fetch(P.url, { cache: 'no-cache' }), new Promise((_, ng) => setTimeout(() => ng(new Error('timeout')), 10000))]);
       if (!r.ok) throw new Error(String(r.status));
       const text = await r.text();
       if (gen !== tableGen) return;
       LS.set(cacheKey, text);
-      if (text !== cached || !cached) setTable(parseTable(text), P.label, `${P.source} から取得`);
-      else { tblNote = `${P.source} から取得`; analyseAsync(); }
+      if (text !== cached || !cached) setTable(parseTable(text), P.label, P.source);
+      else { tblNote = P.source; analyseAsync(); }
     } catch (err) {
       if (gen !== tableGen) return;
-      if (cached) { tblNote = `${P.source}（取得できなかったため保存済み）`; analyseAsync(); }
+      if (cached) { tblNote = P.source; analyseAsync(); }
       else {
         tableMode = prev === mode ? 'std' : prev; syncSeg();
         if (tableMode === 'std') setTable(null, STD_LABEL, '標準');
-        showTblMsg(`${P.label} を取得できませんでした。ネットワークを確認してください。`);
+        showTblMsg(`${P.label} のテーブルを読み込めませんでした。`);
         return;
       }
     }

@@ -78,3 +78,13 @@ test('display units: a lone n for ん is its own unit', () => {
   assert.deepEqual(units(STD, 'こんにちは').join(' '), 'ko:こ nn:ん ni:に ti:ち ha:は');
   assert.deepEqual(units(AZIK, 'にゅうじょうけん'), ['nyh:にゅう', 'jp:じょう', 'kd:けん']);
 });
+
+test('bundled AZIK table (from azooKey) works with the engine', () => {
+  const az = new Engine(parseTable(readFileSync(new URL('../tables/azik.tsv', import.meta.url), 'utf8')));
+  assert.equal(plan(az, 'にゅうじょうけん'), 'nyhjpkd');
+  assert.equal(plan(az, 'しんかんせん'), 'skknsd');
+  assert.equal(plan(az, 'よっつ'), 'yo;tu');
+  assert.equal(plan(az, 'こーひー'), 'ko:hi:');
+  const words = parseWords(readFileSync(new URL('../words/basic.tsv', import.meta.url), 'utf8'));
+  assert.deepEqual(words.filter(w => solve(az, w.y).min === Infinity).map(w => w.w), []);
+});
