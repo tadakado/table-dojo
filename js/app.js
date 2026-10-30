@@ -136,9 +136,12 @@ function renderGuide(el, s, typed, plan, showNext) {
     });
     const a = document.createElement('span'); a.className = 'a'; a.textContent = c.kana;
     d.append(k, a);
-    if (alts[ci].length) {   // other spellings, equally short and also accepted
+    // other spellings, equally short and also accepted; once a unit is started, keep only
+    // those that agree with what has been typed, and drop them for finished units
+    const done = n - c.i, show = done >= c.keys.length ? [] : alts[ci].filter(x => x.startsWith(c.keys.slice(0, Math.max(0, done))));
+    if (show.length) {
       const o = document.createElement('span'); o.className = 'alt';
-      o.textContent = alts[ci].join(' ');
+      o.textContent = show.join(' ');
       o.title = '同じ打鍵数のほかの打ち方（どれでも正解）';
       d.appendChild(o);
     }
@@ -601,9 +604,10 @@ function bootError(err) {
 }
 
 async function boot() {
-  applyTable(tableMode);
+  // word list first: applyTable() -> syncSeg() would otherwise fall back to the basic words
   const sw = LS.get('dojo-words-list');
   if (sw) { customWords = parseWords(sw); $('#clearWords').hidden = false; }
+  applyTable(tableMode);
   refreshAll();   // usable right away with the sample word
 
   try { BASIC = parseWords(await fetchText('words/basic.tsv')); }
