@@ -58,7 +58,9 @@ UTF-8 のテキストで、1行に `表記<TAB>よみ`（カンマ区切りも�
 刻印は [keymap-drawer](https://github.com/caksoylar/keymap-drawer) の `keymap parse` が出す YAML、配置は ZMK の physical layout（`key_physical_attrs` を含む dtsi）か `keymap draw` が出す SVG から読みます。
 レイヤー名は、そのレイヤーに切り替えるキーの刻印（例: `Lower`）と同じにしておいてください。別レイヤーの文字を「Lower を押しながら」と示すのに使います。
 
-**Web から読み込む**（「自作キーボード」カードの入力欄、エディタの「Web から開く」）
+「自作キーボード」カードの一番上に、使用中のキーボードと、刻印・配置それぞれの読み込み元を表示します。
+
+**GitHub から読み込む**（エディタでは「Web から開く」）
 
 | 入力 | 取得するもの |
 | --- | --- |
@@ -66,11 +68,11 @@ UTF-8 のテキストで、1行に `表記<TAB>よみ`（カンマ区切りも�
 | GitHub のファイル URL（`/blob/…` や raw.githubusercontent.com） | その YAML と、`dts_layout` が指す dtsi |
 | その他の https URL | その YAML と、YAML の場所から見た `dts_layout` の dtsi |
 
-YAML に `dts_layout` がない場合は、「配置ファイルの URL を別に指定」に dtsi の URL を入れます。
+YAML に `dts_layout` がない場合は、「YAML に配置ファイルが書かれていない場合」を開いて dtsi の URL を入れます。
 読み込んだアドレスは保存され、ページを開くたびに最新を取り直します（取得できないときは前回の取得分を使います）。
 GitHub の raw ファイルは最大5分ほどキャッシュされるので、push 直後は少し待ってください。
 
-**ファイルから読み込む**: YAML と配置ファイルを同時に選ぶかドロップします。
+**ファイルから読み込む**: 「刻印」で YAML、「配置」で dtsi か SVG を選びます。片方だけ選ぶと、もう片方は使用中のものをそのまま使います（たとえば配置だけ自分の dtsi に差し替える）。2つまとめてドロップしても読み込めます。
 
 既定では [tk46v6b](https://github.com/tadakado/tk46v6b) を GitHub から取得して表示します。取得できないときは `keyboards/tk46v6b/` の同梱データを使います。
 

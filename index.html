@@ -103,28 +103,55 @@
 
     <section class="card">
       <h2>自作キーボード</h2>
-      <div class="drop" id="dropCK">
+      <div class="cknow" id="ckNow" aria-live="polite">
+        <div class="cknow-head"><span class="field-label">使用中</span><b id="ckName">—</b><span class="cknow-meta" id="ckMeta"></span></div>
+        <dl class="cksrc">
+          <dt>刻印</dt><dd id="ckSrcY">—</dd>
+          <dt>配置</dt><dd id="ckSrcL">—</dd>
+        </dl>
         <div class="row">
-          <label class="btn ghost" for="fileCK">YAML と配置ファイルを選択</label>
-          <input class="vh" type="file" id="fileCK" accept=".yaml,.yml,.svg,.dtsi,.dts,.overlay" multiple>
-          <button class="btn ghost" id="resetCK">既定に戻す</button>
+          <label for="ckBaseSel" class="field-label">ベースレイヤー</label><select id="ckBaseSel"></select>
+          <button class="btn ghost sm" id="resetCK" type="button" hidden>既定（tk46v6b）に戻す</button>
         </div>
-        <div class="status" id="ckStatus"></div>
       </div>
-      <form class="urlform" id="ckUrlForm">
-        <label class="field-label" for="ckUrl">Web から読み込む</label>
+      <div class="status" id="ckStatus" role="status"></div>
+
+      <form class="cksec urlform" id="ckUrlForm">
+        <h3>GitHub から読み込む</h3>
         <div class="row">
-          <input type="text" id="ckUrl" placeholder="owner/repo または YAML の URL" autocomplete="off" spellcheck="false">
+          <input type="text" id="ckUrl" placeholder="例: tadakado/tk46v6b" autocomplete="off" spellcheck="false" aria-label="リポジトリまたは YAML の URL">
           <button class="btn ghost" id="ckUrlBtn" type="submit">取得</button>
         </div>
+        <p>リポジトリ名（<code>owner/repo</code>）か YAML の URL。刻印 YAML と、そこに書かれた配置ファイルをまとめて取得し、開くたびに最新を取り直します。</p>
         <details>
-          <summary>配置ファイルの URL を別に指定</summary>
-          <input type="text" id="ckLayoutUrl" placeholder="dtsi の URL（YAML の dts_layout を使わない場合）" autocomplete="off" spellcheck="false">
+          <summary>YAML に配置ファイルが書かれていない場合</summary>
+          <input type="text" id="ckLayoutUrl" placeholder="dtsi の URL" autocomplete="off" spellcheck="false" aria-label="配置ファイル（dtsi）の URL">
         </details>
       </form>
-      <div class="row"><label for="ckBaseSel" class="field-label">ベースレイヤー</label><select id="ckBaseSel"></select></div>
-      <p>GitHub のリポジトリ（例: <code>tadakado/tk46v6b</code>）を入れると、<code>keymap/</code> の刻印 YAML と、その <code>layout: {dts_layout: …}</code> が指す dtsi を取得します。開くたびに最新を取り直します。</p>
-      <p>ファイルから読む場合は、keymap-drawer の <code>keymap parse</code> が出す YAML（刻印）と、dtsi か <code>keymap draw</code> の SVG（配置）を同時に選びます。レイヤー名をそのレイヤーに切り替えるキーの刻印（例: Lower）と同じにしておくと、別レイヤーの文字は「押しながら」で示します。</p>
+
+      <div class="cksec drop" id="dropCK">
+        <h3>ファイルから読み込む</h3>
+        <div class="ckfile">
+          <span class="field-label">刻印</span>
+          <label class="btn ghost sm" for="fileCKY">YAML を選ぶ</label>
+          <input class="vh" type="file" id="fileCKY" accept=".yaml,.yml">
+          <span class="ckfn" id="ckFnY"></span>
+        </div>
+        <div class="ckfile">
+          <span class="field-label">配置</span>
+          <label class="btn ghost sm" for="fileCKL">dtsi / SVG を選ぶ</label>
+          <input class="vh" type="file" id="fileCKL" accept=".dtsi,.dts,.overlay,.svg">
+          <span class="ckfn" id="ckFnL"></span>
+        </div>
+        <p>片方だけ選ぶと、もう片方は使用中のものをそのまま使います。2つまとめてここにドロップしても読み込めます。</p>
+      </div>
+
+      <details class="ckhelp">
+        <summary>ファイルの作り方</summary>
+        <p>刻印は <a href="https://github.com/caksoylar/keymap-drawer">keymap-drawer</a> の <code>keymap parse</code> が出す YAML、配置は ZMK の physical layout（<code>key_physical_attrs</code> を含む dtsi）か <code>keymap draw</code> が出す SVG です。配置は「配置エディタ」でも作れます。</p>
+        <p>レイヤー名を、そのレイヤーに切り替えるキーの刻印（例: <code>Lower</code>）と同じにしておくと、別レイヤーの文字を「Lower を押しながら」と示します。</p>
+        <p>GitHub からは <code>keymap/&lt;repo&gt;.yaml</code>（なければ <code>keymap/</code> 内の YAML）と、その <code>layout: {dts_layout: …}</code> が指す dtsi を読みます。</p>
+      </details>
     </section>
   </div>
 </div>

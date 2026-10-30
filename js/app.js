@@ -490,12 +490,36 @@ function convRender() {
 $('#convIn').addEventListener('input', convRender);
 
 /* custom keyboard: files, web, default */
+// The card shows where the legends (刻印, YAML) and the geometry (配置, dtsi/SVG) of the keyboard in use came from.
+// A source is { file, via, note }: e.g. { file: 'tk46v6b.yaml', via: 'GitHub tadakado/tk46v6b', note: '10/30 20:56 取得' }.
+let CUR = null;   // { yaml, layout, label, src: { y, l } } of the keyboard in use
 function ckStatus(h) { $('#ckStatus').innerHTML = h; }
 function ckError(msg) { ckStatus('<span class="ng"></span>'); $('#ckStatus .ng').textContent = msg; }
+const baseName = u => String(u || '').split(/[?#]/)[0].split('/').pop();
+function srcCell(el, s) {
+  el.textContent = '';
+  if (!s) { el.textContent = '—'; return; }
+  const f = document.createElement('span'); f.textContent = s.file || '';
+  const v = document.createElement('span'); v.className = 'via';
+  v.textContent = [s.via, s.note].filter(Boolean).join(' ・ ');
+  el.append(f, s.file && v.textContent ? ' — ' : '', v);
+}
+function renderCKNow() {
+  $('#ckName').textContent = CUR ? CUR.label : '—';
+  $('#ckMeta').textContent = CK ? `${CK.geom.filter(Boolean).length}キー ・ ${CK.layers.length}レイヤー` : '';
+  srcCell($('#ckSrcY'), CUR && CUR.src.y);
+  srcCell($('#ckSrcL'), CUR && CUR.src.l);
+  for (const [k, id] of [['y', '#ckFnY'], ['l', '#ckFnL']]) {
+    const s = CUR && CUR.src[k], el = $(id), mine = s && s.via === 'ファイル';
+    el.textContent = mine ? s.file : '未選択'; el.classList.toggle('set', !!mine);
+  }
+}
 // save: 'file' | 'url' | false (default keyboard, nothing to keep)
-function setCK(yamlText, layoutText, label, save, note = '') {
-  try { CK = parseKeyboard(window.jsyaml, yamlText, layoutText, label); }
+function setCK(yamlText, layoutText, label, save, src) {
+  let kb;
+  try { kb = parseKeyboard(window.jsyaml, yamlText, layoutText, label); }
   catch (err) { ckError(err.message); return false; }
+  CK = kb; CUR = { yaml: yamlText, layout: layoutText, label, src };
   const names = CK.layers.map(l => l.name);
   let b = +(LS.get('dojo-ck-base-' + label) ?? NaN);
   if (!(b >= 0 && b < names.length)) {
@@ -508,43 +532,47 @@ function setCK(yamlText, layoutText, label, save, note = '') {
   names.forEach((n, i) => { const o = document.createElement('option'); o.value = i; o.textContent = n; sel.appendChild(o); });
   sel.value = b;
   ckStatus('');
-  const ok = document.createElement('span'); ok.className = 'ok'; ok.textContent = label;
-  $('#ckStatus').append(ok, ` ・ ${CK.geom.filter(Boolean).length}キー ・ ${names.length}レイヤー` + (note ? ` ・ ${note}` : ''));
-  if (save) { LS.set('dojo-ck-yaml', yamlText); LS.set('dojo-ck-svg', layoutText); LS.set('dojo-ck-name', label); }
-  if (save === 'file') { LS.del('dojo-ck-url'); LS.del('dojo-ck-url-layout'); }
-  $('#resetCK').hidden = !save;
+  if (save) { LS.set('dojo-ck-yaml', yamlText); LS.set('dojo-ck-svg', layoutText); LS.set('dojo-ck-name', label); LS.set('dojo-ck-src', JSON.stringify(src)); LS.del('dojo-ck-geo'); }
+  if (save === 'file') { LS.del('dojo-ck-url'); LS.del('dojo-ck-url-layout'); $('#ckUrl').value = ''; $('#ckLayoutUrl').value = ''; }
+  $('#resetCK').hidden = !save && !LS.get('dojo-ck-geo');
+  renderCKNow();
   return true;
 }
 function afterCK() { if (kbLayout === 'custom') { buildKb(); if (view === 'game') setNextKey(G.plan[0]); } }
 function useCustomLayout() { kbLayout = 'custom'; LS.set('dojo-kb', 'custom'); LS.set('dojo-kb-manual', '1'); syncSeg(); buildKb(); }
 $('#ckBaseSel').onchange = e => { ckBase = +e.target.value; if (CK) LS.set('dojo-ck-base-' + CK.label, String(ckBase)); afterCK(); };
 
+const isYaml = f => /\.ya?ml$/i.test(f.name);
+const isLayout = f => /\.(dtsi|dts|overlay|svg)$/i.test(f.name);
+/** Load a YAML and/or a layout file; a missing side keeps the one in use. */
 async function loadCKFiles(files) {
   ckUser++;
   const fs = [...files];
-  const fy = fs.find(f => /\.ya?ml$/i.test(f.name));
-  const fv = fs.find(f => /\.(dtsi|dts|overlay)$/i.test(f.name)) || fs.find(f => /\.svg$/i.test(f.name));
-  if (!fy && fv && DEF_KB && LS.get('dojo-ck-yaml') == null) {
-    // Layout only: keep the default keyboard's legends, swap its geometry.
-    const st = await readFile(fv);
-    if (setCK(DEF_KB.yaml, st, DEF_KB.name, false, `配置: ${fv.name}`)) { LS.set('dojo-ck-geo', st); $('#resetCK').hidden = false; afterCK(); }
-    return;
-  }
-  if (!fy || !fv) { ckError('YAML と、dtsi か SVG を同時に選んでください'); return; }
-  const yt = await readFile(fy), st = await readFile(fv);
-  if (setCK(yt, st, fy.name.replace(/\.ya?ml$/i, ''), 'file')) useCustomLayout();
+  const fy = fs.find(isYaml), fv = fs.find(f => /\.(dtsi|dts|overlay)$/i.test(f.name)) || fs.find(f => /\.svg$/i.test(f.name));
+  if (!fy && !fv) { ckError('YAML（刻印）か、dtsi / SVG（配置）を選んでください'); return; }
+  if ((!fy || !fv) && !CUR) { ckError('使用中のキーボードがないため、YAML と配置ファイルの両方を選んでください'); return; }
+  const file = f => ({ file: f.name, via: 'ファイル' });
+  const yaml = fy ? await readFile(fy) : CUR.yaml, layout = fv ? await readFile(fv) : CUR.layout;
+  const label = fy ? fy.name.replace(/\.ya?ml$/i, '') : CUR.label;
+  const src = { y: fy ? file(fy) : CUR.src.y, l: fv ? file(fv) : CUR.src.l };
+  if (setCK(yaml, layout, label, 'file', src)) useCustomLayout();
 }
-$('#fileCK').onchange = e => { loadCKFiles(e.target.files); e.target.value = ''; };
+$('#fileCKY').onchange = e => { if (e.target.files.length) loadCKFiles(e.target.files); e.target.value = ''; };
+$('#fileCKL').onchange = e => { if (e.target.files.length) loadCKFiles(e.target.files); e.target.value = ''; };
 dropify($('#dropCK'), loadCKFiles);
 
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, ng) => setTimeout(() => ng(new Error('タイムアウトしました')), ms))]);
 const fetched = () => `${new Date().toLocaleString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 取得`;
+const remoteSrc = kb => {
+  const via = /^https?:/.test(kb.source) ? 'Web' : `GitHub ${kb.source}`, note = fetched();
+  return { y: { file: baseName(kb.yamlUrl) || 'YAML', via, note }, l: { file: baseName(kb.layoutUrl) || '配置', via, note } };
+};
 
 /** Fetch a keyboard from GitHub / a URL and remember the address so it is re-fetched on every visit. */
 async function loadRemote(spec, layoutUrl = '') {
   ckStatus('取得中…');
   const kb = await withTimeout(fetchKeyboard(spec, { yaml: window.jsyaml, layoutUrl }), 15000);
-  if (!setCK(kb.yamlText, kb.layoutText, kb.name, 'url', `${kb.source} から${fetched()}`)) return false;
+  if (!setCK(kb.yamlText, kb.layoutText, kb.name, 'url', remoteSrc(kb))) return false;
   LS.set('dojo-ck-url', spec); LS.set('dojo-ck-url-layout', layoutUrl);
   return true;
 }
@@ -552,6 +580,7 @@ let ckUser = 0;   // bumped on every user action, so a slow boot-time load never
 $('#ckUrlForm').addEventListener('submit', async e => {
   e.preventDefault(); ckUser++;
   const spec = $('#ckUrl').value.trim(), lu = $('#ckLayoutUrl').value.trim();
+  if (!spec) { ckError('リポジトリ名（例: tadakado/tk46v6b）か YAML の URL を入れてください'); $('#ckUrl').focus(); return; }
   const btn = $('#ckUrlBtn'); btn.disabled = true;
   try { if (await loadRemote(spec, lu)) useCustomLayout(); }
   catch (err) { ckError(err.message); }
@@ -560,19 +589,19 @@ $('#ckUrlForm').addEventListener('submit', async e => {
 
 async function loadDefaultCK() {
   if (!DEF_KB) return false;
-  const g = LS.get('dojo-ck-geo');
-  if (g && setCK(DEF_KB.yaml, g, DEF_KB.name, false, '配置を差し替え中')) { $('#resetCK').hidden = false; return true; }
-  return setCK(DEF_KB.yaml, DEF_KB.layout, DEF_KB.name, false, DEF_KB.note);
+  const g = LS.get('dojo-ck-geo');   // older versions: default legends with a replaced layout
+  if (g && setCK(DEF_KB.yaml, g, DEF_KB.name, false, { y: DEF_KB.src.y, l: { file: '（差し替えた配置）', via: 'ファイル' } })) return true;
+  return setCK(DEF_KB.yaml, DEF_KB.layout, DEF_KB.name, false, DEF_KB.src);
 }
 $('#resetCK').onclick = async () => {
   ckUser++;
-  ['dojo-ck-yaml', 'dojo-ck-svg', 'dojo-ck-name', 'dojo-ck-geo', 'dojo-ck-url', 'dojo-ck-url-layout'].forEach(k => LS.del(k));
+  ['dojo-ck-yaml', 'dojo-ck-svg', 'dojo-ck-name', 'dojo-ck-src', 'dojo-ck-geo', 'dojo-ck-url', 'dojo-ck-url-layout'].forEach(k => LS.del(k));
   $('#ckUrl').value = ''; $('#ckLayoutUrl').value = '';
   if (!DEF_KB) {
     ckStatus('既定のキーボードを取得中…');
     try { DEF_KB = await loadDefaultKeyboard(); } catch (err) { ckError('既定のキーボードを読み込めませんでした'); return; }
   }
-  await loadDefaultCK(); $('#resetCK').hidden = true; afterCK();
+  await loadDefaultCK(); afterCK();
 };
 
 /* ---------- boot ---------- */
@@ -589,11 +618,11 @@ async function loadDefaultKeyboard() {
   if (k.repo) {
     try {
       const kb = await withTimeout(fetchKeyboard(k.repo, { yaml: window.jsyaml }), 8000);
-      return { ...k, yaml: kb.yamlText, layout: kb.layoutText, note: `${kb.source} から${fetched()}` };
+      return { ...k, yaml: kb.yamlText, layout: kb.layoutText, src: remoteSrc(kb) };
     } catch (err) { /* offline or not found: use the bundled copy */ }
   }
   const [yaml, layout] = await Promise.all([fetchText(k.yaml), fetchText(k.layout)]);
-  return { ...k, yaml, layout, note: '同梱データ' };
+  return { ...k, yaml, layout, src: { y: { file: baseName(k.yaml), via: '同梱データ' }, l: { file: baseName(k.layout), via: '同梱データ' } } };
 }
 function bootError(err) {
   const d = document.createElement('div'); d.className = 'boot-error';
@@ -617,14 +646,19 @@ async function boot() {
 
   const gen = ckUser;
   const url = LS.get('dojo-ck-url'), urlLayout = LS.get('dojo-ck-url-layout') || '';
-  const yy = LS.get('dojo-ck-yaml'), ss = LS.get('dojo-ck-svg');
+  const yy = LS.get('dojo-ck-yaml'), ss = LS.get('dojo-ck-svg'), name = LS.get('dojo-ck-name') || '自作';
+  let saved = null;
+  try { saved = JSON.parse(LS.get('dojo-ck-src') || 'null'); } catch (e) { /* older versions kept no sources */ }
   if (url) {
     $('#ckUrl').value = url; $('#ckLayoutUrl').value = urlLayout;
     let ok = false;
     try { ok = await loadRemote(url, urlLayout); } catch (err) { /* fall back below */ }
-    if (!ok && yy && ss) ok = setCK(yy, ss, LS.get('dojo-ck-name') || '自作', 'url', '取得できなかったため前回の取得分');
+    if (!ok && yy && ss) {
+      const stale = s => ({ ...(s || { file: '', via: url }), note: '取得できなかったため前回の取得分' });
+      ok = setCK(yy, ss, name, 'url', { y: stale(saved && saved.y), l: stale(saved && saved.l) });
+    }
     if (ok) { afterCK(); return; }
-  } else if (yy && ss && setCK(yy, ss, LS.get('dojo-ck-name') || '自作', 'file', 'ファイルから読み込み')) { afterCK(); return; }
+  } else if (yy && ss && setCK(yy, ss, name, 'file', saved || { y: { file: name + '.yaml', via: 'ファイル' }, l: { file: '', via: 'ファイル' } })) { afterCK(); return; }
 
   ckStatus('既定のキーボードを取得中…');
   let def = null;
