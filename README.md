@@ -117,6 +117,7 @@ css/editor.css          エディタ
 js/engine.js            IME シミュレータ・最短打鍵探索・テーブル/単語の読み込み（DOM 非依存）
 js/keyboard.js          自作キーボード（YAML + dtsi/SVG）の読み込みとキー探索
 js/remote.js            GitHub / URL からの取得（取得先の解決）
+js/version.js           バージョン表示（version.json）
 js/app.js               練習ページの画面と進行
 js/editor.js            エディタ
 words/basic.tsv         基本語彙
@@ -142,7 +143,12 @@ tests/                  node --test のテスト
 
 ## GitHub Pages で公開する
 
-リポジトリの Settings → Pages で、Source を「Deploy from a branch」、Branch を `main` の `/ (root)` にします。ビルドは不要です。
+`.github/workflows/pages.yml` が、`main` への push ごとにテストを実行し、通ったら公開します。リポジトリの Settings → Pages → Build and deployment の Source を「GitHub Actions」にしておいてください。
+
+### バージョン表示
+
+ページのヘッダーに、公開したコミットの日時（日本時間）を `2026.10.30.2056`（年.月.日.時分）の形で表示します。クリックすると、そのコミットを GitHub で開きます。
+番号は公開時にワークフローが `version.json` に書き込みます。単一ファイル版は `npm run build` の時点のコミットから同じ形式で埋め込み、未コミットの変更があれば末尾に `-dirty` を付けます。手元で `python3 -m http.server` から開いたときは `dev` と表示されます。
 
 ## 単語リストについて
 

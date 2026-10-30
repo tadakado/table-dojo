@@ -30,3 +30,6 @@ img,svg{max-width:100%}
 .nav a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .boot-error{max-width:640px;margin:24px auto;padding:14px 16px;border:1px solid var(--miss);border-radius:10px;color:var(--ink);background:var(--miss-soft);font-size:.9rem}
 .boot-error code{font-family:var(--mono)}
+.ver{font-family:var(--mono);font-size:.72rem;color:var(--muted);text-decoration:none;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.ver[href]:hover{color:var(--ink);text-decoration:underline}
+.ver:focus-visible{outline:2px solid var(--accent);outline-offset:1px}

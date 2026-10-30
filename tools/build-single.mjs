@@ -13,6 +13,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execSync } from 'node:child_process';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => readFileSync(join(ROOT, p), 'utf8');
@@ -40,9 +41,23 @@ function bundle(entry) {
   }).join('\n\n');
 }
 
+/** Same format as the Pages workflow: commit time in JST, YYYY.MM.DD.HHMM (+"-dirty" with local changes). */
+function versionJson() {
+  const git = cmd => execSync(`git ${cmd}`, { cwd: ROOT, env: { ...process.env, TZ: 'Asia/Tokyo' }, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  try {
+    const version = git('log -1 --date=format-local:%Y.%m.%d.%H%M --format=%cd');
+    const commit = git('rev-parse HEAD');
+    const dirty = git('status --porcelain --untracked-files=no') ? '-dirty' : '';
+    const m = /github\.com[:/]([^/]+\/[^/.]+)/.exec(git('remote get-url origin'));
+    return JSON.stringify({ version: version + dirty, commit, repo: m ? m[1] : '' });
+  } catch (e) {
+    return JSON.stringify({ version: 'dev' });
+  }
+}
+
 /** Files the pages fetch at run time, served from memory instead. */
 function bundledFiles() {
-  const files = { 'words/basic.tsv': read('words/basic.tsv'), 'tables/azik.tsv': read('tables/azik.tsv'), 'keyboards/index.json': read('keyboards/index.json') };
+  const files = { 'words/basic.tsv': read('words/basic.tsv'), 'tables/azik.tsv': read('tables/azik.tsv'), 'keyboards/index.json': read('keyboards/index.json'), 'version.json': versionJson() };
   for (const k of JSON.parse(files['keyboards/index.json']).keyboards) { files[k.yaml] = read(k.yaml); files[k.layout] = read(k.layout); }
   return files;
 }

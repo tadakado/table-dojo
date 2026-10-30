@@ -1,5 +1,6 @@
 // ZMK physical layout editor (key_physical_attrs). Values are kept in dtsi units: 1u = 100, rotation in degrees.
 import { fetchKeyboard } from './remote.js';
+import { showVersion } from './version.js';
 const $=s=>document.querySelector(s),NS='http://www.w3.org/2000/svg';
 const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 
@@ -263,5 +264,6 @@ async function boot(){
   hist.length=0;hist.push(JSON.stringify(keys));syncHist();render();renderOut();
   requestAnimationFrame(()=>{fit();hud('キーをドラッグして移動');});
 }
+showVersion($('#appVersion'));
 boot();
 window.addEventListener('resize',()=>{const r=svg.getBoundingClientRect();if(r.width)fit();});

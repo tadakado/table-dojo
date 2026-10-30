@@ -4,6 +4,7 @@ import {
 } from './engine.js';
 import { parseKeyboard, legendAt, legendChar, findKey } from './keyboard.js';
 import { fetchKeyboard } from './remote.js';
+import { showVersion } from './version.js';
 
 const $ = s => document.querySelector(s);
 const LS = {
@@ -630,4 +631,5 @@ async function boot() {
   await loadDefaultCK();
   afterCK();
 }
+showVersion($('#appVersion'));
 boot();
