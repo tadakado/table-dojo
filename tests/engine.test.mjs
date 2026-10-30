@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  Engine, Solver, STD, stdEntries, parseTable, parseWords, solve, makePlan, chunksOf, stdMin, toHalf, toHira,
+  Engine, Solver, STD, stdEntries, parseTable, parseWords, solve, makePlan, chunksOf, chunkAlternatives, stdMin, toHalf, toHira,
 } from '../js/engine.js';
 
 const fixture = readFileSync(new URL('./fixtures/azik-mini.tsv', import.meta.url), 'utf8');
@@ -101,4 +101,27 @@ test('equally short: standard romaji is preferred over alternative spellings', (
   const s = solve(odd, 'かさ');
   assert.equal(makePlan(s.start).join(''), 'aksa');               // key order alone
   assert.equal(makePlan(s.start, [], s).join(''), 'kasa');        // standard romaji preferred
+});
+
+test('alternatives per display unit: equally short and still finishing the word', () => {
+  const az = new Engine(parseTable(readFileSync(new URL('../tables/azik.tsv', import.meta.url), 'utf8')));
+  const show = (eng, y) => {
+    const s = solve(eng, y), p = makePlan(s.start, [], s), al = chunkAlternatives(s, p);
+    return chunksOf(s, p).map((c, i) => c.keys + (al[i].length ? '[' + al[i].join('/') + ']' : '')).join(' ');
+  };
+  assert.equal(show(az, 'きょねん'), 'kyo[kgo] nd');
+  assert.equal(show(az, 'かんきょう'), 'kn[kz] kyp[kgp]');
+  assert.equal(show(AZIK, 'よっつ'), 'yo ttu[;tu]');            // test table: kk-style っ and ; both work
+  assert.equal(show(AZIK, 'いんしょう'), 'i n[q] sho[syo] u');   // a lone n and q are both ん
+  // every alternative really works in place of the shown keys
+  for (const y of ['しんかんせん', 'せっきょくてき', 'にゅうじょうけん']) {
+    const s = solve(az, y), p = makePlan(s.start, [], s), units = chunksOf(s, p), al = chunkAlternatives(s, p);
+    units.forEach((u, i) => al[i].forEach(alt => {
+      const keys = [...p.slice(0, u.i), ...alt, ...p.slice(u.i + u.keys.length)];
+      let n = s.start;
+      for (const c of keys) n = n.edges.find(e => e[0] === c)[1];
+      assert.equal(n.dist, 0, `${y}: ${keys.join('')}`);
+      assert.equal(keys.length, s.min);
+    }));
+  }
 });

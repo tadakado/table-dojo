@@ -220,6 +220,52 @@ export function chunksOf(sol, seq) {
   return out;
 }
 
+/**
+ * Other key sequences for each display unit of `seq`: the same number of keys,
+ * on shortest paths, after which the rest of `seq` still finishes the word in the
+ * shortest way. Each can be typed in place of the shown keys (AZIK `kgo` for `kyo`,
+ * `q` for a lone `n`). Returns one array of strings per unit of chunksOf(sol, seq).
+ */
+export function chunkAlternatives(sol, seq, limit = 3) {
+  const units = chunksOf(sol, seq), path = [sol.start];
+  for (const c of seq) {
+    const cur = path[path.length - 1], e = cur && cur.edges.find(x => x[0] === c);
+    path.push(e ? e[1] : null);
+  }
+  // does `rest` lead from node n to the goal along shortest edges?
+  const finishes = (n, rest) => {
+    for (const c of rest) {
+      const e = n.edges.find(x => x[0] === c);
+      if (!e || e[1].dist !== n.dist - 1) return false;
+      n = e[1];
+    }
+    return n.dist === 0;
+  };
+  const eng = sol.eng;
+  // When the previous unit left keys pending (a lone `n`), an alternative must start
+  // afresh and leave them as they are (`q`, not `nxp` = `nn` + `xp`).
+  const startsFresh = (b, c) => {
+    if (!b || !eng) return true;
+    const f = eng.flush(b), [o, nb] = eng.feed(b, c), [o2, nb2] = eng.feed('', c);
+    return o === f + o2 && nb === nb2;
+  };
+  return units.map(u => {
+    const from = path[u.i], L = u.keys.length, rest = seq.slice(u.i + L), out = [];
+    if (!from || path.includes(null)) return out;
+    let budget = 2000;
+    (function walk(n, keys) {
+      if (out.length >= limit || budget-- <= 0) return;
+      if (keys.length === L) { if (keys !== u.keys && finishes(n, rest)) out.push(keys); return; }
+      for (const [c, t] of n.edges) {
+        if (t.dist !== n.dist - 1) continue;
+        if (!keys && !startsFresh(from.b, c)) continue;
+        walk(t, keys + c);
+      }
+    })(from, '');
+    return out;
+  });
+}
+
 /** The built-in standard table, used as the baseline for comparisons. */
 export const STD = new Engine(stdEntries());
 const stdCache = new Map();

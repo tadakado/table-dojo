@@ -1,6 +1,6 @@
 // Practice page: UI, game loop, settings. Logic lives in engine.js / keyboard.js.
 import {
-  Engine, Solver, STD, stdMin, parseTable, parseWords, makePlan, chunksOf, toHalf, toHira,
+  Engine, Solver, STD, stdMin, parseTable, parseWords, makePlan, chunksOf, chunkAlternatives, toHalf, toHira,
 } from './engine.js';
 import { parseKeyboard, legendAt, legendChar, findKey } from './keyboard.js';
 import { fetchKeyboard } from './remote.js';
@@ -31,6 +31,7 @@ const cfg = {
   strict: (LS.get('dojo-strict') ?? '1') === '1',
   words: LS.get('dojo-words') || 'basic',
   skipPlain: LS.get('dojo-skip') === '1',
+  alts: (LS.get('dojo-alts') ?? '1') === '1',   // show other equally short spellings under the guide
 };
 const eng = () => solver.eng;
 const sol = y => solver.sol(y);
@@ -120,8 +121,9 @@ function refreshAll() {
 /* ---------- guide ---------- */
 function renderGuide(el, s, typed, plan, showNext) {
   const seq = typed.concat(plan), cs = chunksOf(s, seq), n = typed.length;
+  const alts = cfg.alts ? chunkAlternatives(s, seq) : cs.map(() => []);
   el.innerHTML = '';
-  for (const c of cs) {
+  cs.forEach((c, ci) => {
     const d = document.createElement('span'); d.className = 'ch';
     if (showNext && n >= c.i && n < c.i + c.keys.length) d.classList.add('cur');
     const k = document.createElement('span'); k.className = 'k';
@@ -132,8 +134,15 @@ function renderGuide(el, s, typed, plan, showNext) {
       k.appendChild(i);
     });
     const a = document.createElement('span'); a.className = 'a'; a.textContent = c.kana;
-    d.append(k, a); el.appendChild(d);
-  }
+    d.append(k, a);
+    if (alts[ci].length) {   // other spellings, equally short and also accepted
+      const o = document.createElement('span'); o.className = 'alt';
+      o.textContent = alts[ci].join(' ');
+      o.title = '同じ打鍵数のほかの打ち方（どれでも正解）';
+      d.appendChild(o);
+    }
+    el.appendChild(d);
+  });
 }
 function cmpText(y, s) {
   const st = stdMin(y);
@@ -402,12 +411,18 @@ function syncSeg() {
   $('#btnCustomWords').disabled = !hasC;
   if (!hasC && cfg.words === 'custom') cfg.words = 'basic';
   document.querySelectorAll('#segWords button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === cfg.words));
+  document.querySelectorAll('#segAlts button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === cfg.alts));
   document.querySelectorAll('#segSkip button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === cfg.skipPlain));
 }
 const seg = (id, fn) => { $(id).onclick = e => { const b = e.target.closest('button'); if (!b || b.disabled) return; fn(b.dataset.v); syncSeg(); }; };
 seg('#segTime', v => { cfg.time = +v; LS.set('dojo-time', cfg.time); });
 seg('#segTable', v => { if (v !== tableMode) applyTable(v); });
 seg('#segStrict', v => { cfg.strict = v === '1'; LS.set('dojo-strict', v); });
+seg('#segAlts', v => {
+  cfg.alts = v === '1'; LS.set('dojo-alts', v);
+  if (view === 'game') draw(); else if (view === 'idle') showSample();
+  convRender();
+});
 seg('#segSkip', v => { cfg.skipPlain = v === '1'; LS.set('dojo-skip', v); });
 seg('#segWords', v => { cfg.words = v; LS.set('dojo-words', v); });
 seg('#segKb', v => { kbLayout = v; LS.set('dojo-kb', v); LS.set('dojo-kb-manual', '1'); buildKb(); if (view === 'game') setNextKey(G.plan[0]); });
