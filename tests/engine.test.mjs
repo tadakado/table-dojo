@@ -104,7 +104,9 @@ test('equally short: standard romaji is preferred over alternative spellings', (
   try {
     assert.equal(shown('さいご'), 'sfgo');
     assert.equal(shown('かわいい'), 'kawfi');
-    assert.equal(shown('きょねん'), 'kyond');     // standard romaji still wins a tie
+    assert.equal(shown('きょねん'), 'kgond');     // kgo (right-left-right) over the standard kyo
+    assert.equal(shown('ふね'), 'hfne');
+    assert.equal(shown('よっつ'), 'yo;tu');
   } finally { setPlanStyle('regular'); }
   // A table whose key order would pick the alternative first: `ak` = か ties with `ka`.
   const odd = new Engine(stdEntries().concat(parseTable('ak\tか\n')));

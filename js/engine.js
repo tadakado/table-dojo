@@ -191,7 +191,11 @@ export function solve(eng, target) {
  *   3. the engine's key order.
  */
 let PLAN_STYLE = 'regular';
-/** Which of equally short, non-standard ways the guide shows: 'regular' (systematic rules) or 'special' (one-off rules). */
+/**
+ * Which of equally short ways the guide shows.
+ * 'regular': standard romaji first, then the most systematic rule (kyo, sq).
+ * 'special': the table's own rules first, the rarest of them first (kgo, sf).
+ */
 export function setPlanStyle(v) { PLAN_STYLE = v === 'special' ? 'special' : 'regular'; }
 
 export function makePlan(node, prefer = [], sol = null) {
@@ -203,23 +207,28 @@ export function makePlan(node, prefer = [], sol = null) {
   while (cur.dist > 0 && cur.dist < Infinity) {
     const cands = cur.edges.filter(e => e[1].dist === cur.dist - 1);
     let pick = cands.find(e => e[0] === pref[i]) || null;
+    let pool = cands;
     if (!pick && std) {
       const sn = stdG.nodes.get(std.p + '\u0001' + std.b);
       if (sn && sn.dist < Infinity) {
         const good = new Set(sn.edges.filter(e => e[1].dist === sn.dist - 1).map(e => e[0]));
-        pick = cands.find(e => good.has(e[0])) || null;
+        if (PLAN_STYLE === 'special') {
+          // the table's own way over standard romaji (kgo over kyo, hf over hu), when one is equally short
+          const other = cands.filter(e => !good.has(e[0]));
+          if (other.length) pool = other;
+        } else pick = cands.find(e => good.has(e[0])) || null;
       }
     }
-    // no standard-romaji way: by default the key completing the most systematic rule (sq over sf for さい);
+    // among the rest: by default the key completing the most systematic rule (sq over sf for さい);
     // with the 'special' style, the one completing the rarest rule (sf over sq)
-    if (!pick && cands.length > 1 && sol) {
+    if (!pick && pool.length > 1 && sol) {
       let best = null;
-      for (const e of cands) {
+      for (const e of pool) {
         const f = sol.eng.family(cur.b, e[0]);
         if (PLAN_STYLE === 'special' ? f > 0 && (best === null || f < best) : f > (best ?? -1)) { best = f; pick = e; }
       }
     }
-    if (!pick) pick = cands[0];
+    if (!pick) pick = pool[0];
     if (!pick) break;
     if (pick[0] !== pref[i]) pref = [];
     // advance the parallel standard-romaji state; drop it when this key is not plain romaji
