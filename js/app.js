@@ -1,6 +1,6 @@
 // Practice page: UI, game loop, settings. Logic lives in engine.js / keyboard.js.
 import {
-  Engine, Solver, STD, stdMin, parseTable, parseWords, makePlan, chunksOf, chunkAlternatives, toHalf, toHira,
+  Engine, Solver, STD, stdMin, parseTable, parseWords, makePlan, chunksOf, chunkAlternatives, toHalf, toHira, setPlanStyle,
 } from './engine.js';
 import { parseKeyboard, legendAt, legendChar, findKey } from './keyboard.js';
 import { fetchKeyboard } from './remote.js';
@@ -32,8 +32,10 @@ const cfg = {
   strict: (LS.get('dojo-strict') ?? '1') === '1',
   words: LS.get('dojo-words') || 'basic',
   skipPlain: LS.get('dojo-skip') === '1',
-  alts: (LS.get('dojo-alts') ?? '1') === '1',   // show other equally short spellings under the guide
+  alts: (LS.get('dojo-alts') ?? '1') === '1',
+  style: LS.get('dojo-plan-style') === 'special' ? 'special' : 'regular',   // which equally short non-standard way to show   // show other equally short spellings under the guide
 };
+setPlanStyle(cfg.style);
 const eng = () => solver.eng;
 const sol = y => solver.sol(y);
 
@@ -415,6 +417,7 @@ function syncSeg() {
   $('#btnCustomWords').disabled = !hasC;
   if (!hasC && cfg.words === 'custom') cfg.words = 'basic';
   document.querySelectorAll('#segWords button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === cfg.words));
+  document.querySelectorAll('#segStyle button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === cfg.style));
   document.querySelectorAll('#segAlts button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === cfg.alts));
   document.querySelectorAll('#segSkip button').forEach(b => b.setAttribute('aria-pressed', (b.dataset.v === '1') === cfg.skipPlain));
 }
@@ -422,6 +425,11 @@ const seg = (id, fn) => { $(id).onclick = e => { const b = e.target.closest('but
 seg('#segTime', v => { cfg.time = +v; LS.set('dojo-time', cfg.time); });
 seg('#segTable', v => { if (v !== tableMode) applyTable(v); });
 seg('#segStrict', v => { cfg.strict = v === '1'; LS.set('dojo-strict', v); });
+seg('#segStyle', v => {
+  cfg.style = v; LS.set('dojo-plan-style', v); setPlanStyle(v);
+  if (view === 'game') { G.plan = makePlan(G.node, [], G.s); draw(); setNextKey(G.plan[0]); } else if (view === 'idle') showSample();
+  convRender();
+});
 seg('#segAlts', v => {
   cfg.alts = v === '1'; LS.set('dojo-alts', v);
   if (view === 'game') draw(); else if (view === 'idle') showSample();

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  Engine, Solver, STD, stdEntries, parseTable, parseWords, solve, makePlan, chunksOf, chunkAlternatives, stdMin, toHalf, toHira,
+  Engine, Solver, STD, setPlanStyle, stdEntries, parseTable, parseWords, solve, makePlan, chunksOf, chunkAlternatives, stdMin, toHalf, toHira,
 } from '../js/engine.js';
 
 const fixture = readFileSync(new URL('./fixtures/azik-mini.tsv', import.meta.url), 'utf8');
@@ -100,6 +100,12 @@ test('equally short: standard romaji is preferred over alternative spellings', (
   assert.equal(shown('さいご'), 'sqgo');         // not sfgo
   assert.equal(shown('かわいい'), 'kawqi');      // wq, not wf
   assert.ok(az.family('s', 'q') > az.family('s', 'f'));
+  setPlanStyle('special');                      // one-off rules first, for practising them
+  try {
+    assert.equal(shown('さいご'), 'sfgo');
+    assert.equal(shown('かわいい'), 'kawfi');
+    assert.equal(shown('きょねん'), 'kyond');     // standard romaji still wins a tie
+  } finally { setPlanStyle('regular'); }
   // A table whose key order would pick the alternative first: `ak` = か ties with `ka`.
   const odd = new Engine(stdEntries().concat(parseTable('ak\tか\n')));
   const s = solve(odd, 'かさ');

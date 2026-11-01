@@ -190,6 +190,10 @@ export function solve(eng, target) {
  *      (AZIK's `kgo` and `kyo` are both きょ in 3 keys; `kyo` is shown);
  *   3. the engine's key order.
  */
+let PLAN_STYLE = 'regular';
+/** Which of equally short, non-standard ways the guide shows: 'regular' (systematic rules) or 'special' (one-off rules). */
+export function setPlanStyle(v) { PLAN_STYLE = v === 'special' ? 'special' : 'regular'; }
+
 export function makePlan(node, prefer = [], sol = null) {
   const keys = [];
   let cur = node, i = 0, pref = prefer;
@@ -206,10 +210,14 @@ export function makePlan(node, prefer = [], sol = null) {
         pick = cands.find(e => good.has(e[0])) || null;
       }
     }
-    // no standard-romaji way: prefer the key that completes the most systematic rule (sq over sf for さい)
-    if (!pick && cands.length > 1) {
-      let best = -1;
-      for (const e of cands) { const f = sol ? sol.eng.family(cur.b, e[0]) : 0; if (f > best) { best = f; pick = e; } }
+    // no standard-romaji way: by default the key completing the most systematic rule (sq over sf for さい);
+    // with the 'special' style, the one completing the rarest rule (sf over sq)
+    if (!pick && cands.length > 1 && sol) {
+      let best = null;
+      for (const e of cands) {
+        const f = sol.eng.family(cur.b, e[0]);
+        if (PLAN_STYLE === 'special' ? f > 0 && (best === null || f < best) : f > (best ?? -1)) { best = f; pick = e; }
+      }
     }
     if (!pick) pick = cands[0];
     if (!pick) break;
