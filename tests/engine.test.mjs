@@ -96,6 +96,10 @@ test('equally short: standard romaji is preferred over alternative spellings', (
   assert.equal(shown('きょう'), 'kyp');          // not kgp
   assert.equal(shown('ふね'), 'hune');           // not hfne
   assert.equal(shown('でんき'), 'ddki');         // not ddkf
+  // no standard way of the same length: the systematic rule (?q = 〜あい) beats a one-off (sf, wf)
+  assert.equal(shown('さいご'), 'sqgo');         // not sfgo
+  assert.equal(shown('かわいい'), 'kawqi');      // wq, not wf
+  assert.ok(az.family('s', 'q') > az.family('s', 'f'));
   // A table whose key order would pick the alternative first: `ak` = か ties with `ka`.
   const odd = new Engine(stdEntries().concat(parseTable('ak\tか\n')));
   const s = solve(odd, 'かさ');
@@ -110,7 +114,7 @@ test('alternatives per display unit: equally short and still finishing the word'
     return chunksOf(s, p).map((c, i) => c.keys + (al[i].length ? '[' + al[i].join('/') + ']' : '')).join(' ');
   };
   assert.equal(show(az, 'きょねん'), 'kyo[kgo] nd');
-  assert.equal(show(az, 'かんきょう'), 'kn[kz] kyp[kgp]');
+  assert.equal(show(az, 'かんきょう'), 'kz[kn] kyp[kgp]');
   assert.equal(show(AZIK, 'よっつ'), 'yo ttu[;tu]');            // test table: kk-style っ and ; both work
   assert.equal(show(AZIK, 'いんしょう'), 'i n[q] sho[syo] u');   // a lone n and q are both ん
   // every alternative really works in place of the shown keys

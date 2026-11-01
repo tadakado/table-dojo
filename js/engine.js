@@ -78,6 +78,33 @@ export class Engine {
     this.size = this.exact.size;
   }
 
+  /**
+   * How many rules of this table follow the same pattern as the rule `buf + c` completes.
+   * A rule `<p><x>` → output is read as "the standard kana of <p><vowel>, then a rest" (sq → さ + い);
+   * its family is every rule with the same last key, vowel and rest (kq かい, tq たい, … but not sf さい).
+   * Used to break ties between equally short, non-standard ways: the systematic rule wins.
+   */
+  family(buf, c) {
+    const fam = this.families || (this.families = this.buildFamilies());
+    const k = this.patternOf(buf + c);
+    return k ? fam.get(k) || 0 : 0;
+  }
+  patternOf(input) {
+    const e = this.exact.get(input);
+    if (!e || e.next || input.length < 2) return null;
+    const p = input.slice(0, -1), x = input.slice(-1);
+    for (const v of 'aiueo') {
+      const base = STD_EXACT && STD_EXACT.get(p + v);
+      if (base && !base.next && e.out.startsWith(base.out)) return `${x}\u0001${v}\u0001${e.out.slice(base.out.length)}`;
+    }
+    return null;
+  }
+  buildFamilies() {
+    const m = new Map();
+    for (const k of this.exact.keys()) { const pt = this.patternOf(k); if (pt) m.set(pt, (m.get(pt) || 0) + 1); }
+    return m;
+  }
+
   /** Feed one key into the pending buffer. Returns [committed kana, new buffer]. */
   feed(buf, c) {
     const mk = buf + '\u0000' + c, m = this.memo.get(mk);
@@ -179,6 +206,11 @@ export function makePlan(node, prefer = [], sol = null) {
         pick = cands.find(e => good.has(e[0])) || null;
       }
     }
+    // no standard-romaji way: prefer the key that completes the most systematic rule (sq over sf for さい)
+    if (!pick && cands.length > 1) {
+      let best = -1;
+      for (const e of cands) { const f = sol ? sol.eng.family(cur.b, e[0]) : 0; if (f > best) { best = f; pick = e; } }
+    }
     if (!pick) pick = cands[0];
     if (!pick) break;
     if (pick[0] !== pref[i]) pref = [];
@@ -268,6 +300,7 @@ export function chunkAlternatives(sol, seq, limit = 3) {
 
 /** The built-in standard table, used as the baseline for comparisons. */
 export const STD = new Engine(stdEntries());
+const STD_EXACT = STD.exact;
 const stdCache = new Map();
 /** Full standard-romaji solution for `y` (cached). */
 export function stdSolution(y) {
