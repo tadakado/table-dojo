@@ -50,7 +50,8 @@ function sync() {
 }
 
 /** One line per word: the guide (keys over kana, other spellings below) and the key count. */
-function render() {
+function render() { renderRows(); fitPip(); }
+function renderRows() {
   const out = EL.lkOut, raw = EL.lkIn.value;
   EL.lkClear.hidden = !raw;
   out.textContent = '';
@@ -104,11 +105,18 @@ window.addEventListener('storage', e => {
 });
 
 /* Always-on-top mini window (Document Picture-in-Picture, Chrome / Edge on desktop) */
+let PIP = null;
+/** Make the mini window exactly as tall as its content (resizing needs a user action, e.g. typing). */
+function fitPip() {
+  if (!PIP) return;
+  const h = Math.ceil(EL.lk.getBoundingClientRect().height) + (PIP.outerHeight - PIP.innerHeight);
+  if (Math.abs(PIP.outerHeight - h) > 1) { try { PIP.resizeTo(PIP.outerWidth, h); } catch (e) { /* not allowed now */ } }
+}
 if ('documentPictureInPicture' in window) {
   const btn = EL.lkPip, lk = EL.lk, home = lk.parentNode, next = lk.nextSibling;
   btn.hidden = false;
   btn.onclick = async () => {
-    const pip = await window.documentPictureInPicture.requestWindow({ width: 300, height: 120 });
+    const pip = await window.documentPictureInPicture.requestWindow({ width: 300, height: 90 });
     for (const sheet of document.styleSheets) {
       try {
         const st = pip.document.createElement('style');
@@ -124,7 +132,8 @@ if ('documentPictureInPicture' in window) {
     pip.document.body.appendChild(lk);
     btn.hidden = true;
     EL.lkIn.focus();
-    pip.addEventListener('pagehide', () => { home.insertBefore(lk, next); btn.hidden = false; });
+    PIP = pip; fitPip();
+    pip.addEventListener('pagehide', () => { PIP = null; home.insertBefore(lk, next); btn.hidden = false; });
   };
 }
 
