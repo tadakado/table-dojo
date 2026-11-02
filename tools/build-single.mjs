@@ -1,6 +1,7 @@
 // Build single-file versions of the two pages into dist/:
 //   dist/table-dojo.html         practice page
 //   dist/table-dojo-editor.html  physical layout editor
+//   dist/table-dojo-lookup.html  lookup widget
 //
 //   node tools/build-single.mjs      (npm run build)
 //
@@ -90,7 +91,8 @@ function build(page, entry, out) {
     inlineScript(FETCH_SHIM(bundledFiles())) + '\n' + inlineScript(`(() => {\n${bundle(entry)}\n})();`));
   // links between the two pages
   html = html.replace(/href="\.\/"/g, 'href="table-dojo.html"')
-             .replace(/href="editor\.html"/g, 'href="table-dojo-editor.html"');
+             .replace(/href="editor\.html"/g, 'href="table-dojo-editor.html"')
+             .replace(/href="lookup\.html"/g, 'href="table-dojo-lookup.html"');
   html = html.replace('</head>', `<meta name="generator" content="table-dojo tools/build-single.mjs">\n</head>`);
   if (/<script[^>]+src="(?!https?:)/.test(html) || /<link rel="stylesheet" href="(?!https?:)/.test(html)) throw new Error(`${out}: local reference left`);
   mkdirSync(join(ROOT, 'dist'), { recursive: true });
@@ -100,3 +102,4 @@ function build(page, entry, out) {
 
 build('index.html', 'js/app.js', 'table-dojo.html');
 build('editor.html', 'js/editor.js', 'table-dojo-editor.html');
+build('lookup.html', 'js/lookup.js', 'table-dojo-lookup.html');

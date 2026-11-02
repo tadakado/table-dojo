@@ -369,3 +369,13 @@ export class Solver {
     return ext;
   }
 }
+
+/** Standard romaji typed with the IME off (kyouiku) → hiragana (きょういく). Kana and other characters pass through. */
+export function romajiToKana(text) {
+  let out = '', buf = '';
+  for (const c of toHalf(String(text)).toLowerCase()) {
+    if (!STD.alphaSet.has(c)) { out += STD.flush(buf) + c; buf = ''; continue; }
+    const [o, b] = STD.feed(buf, c); out += o; buf = b;
+  }
+  return toHira(out + STD.flush(buf));
+}

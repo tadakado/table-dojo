@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>打ち方を調べる</title>
+<meta name="description" content="ひらがなを入れると、選んだローマ字テーブルでの打ち方を表示します">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="打ち方">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/dojo.css">
+<link rel="stylesheet" href="css/lookup.css">
+</head>
+<body class="lookup-page">
+<div class="wrap lk-wrap">
+  <header>
+    <h1>打ち方を調べる</h1>
+    <div class="head-right">
+      <nav class="nav" aria-label="ページ"><a href="./">練習</a><a href="editor.html">配置エディタ</a><a href="lookup.html" aria-current="page">打ち方</a></nav>
+      <a class="ver" id="appVersion" target="_blank" rel="noopener" aria-label="バージョン"></a>
+    </div>
+  </header>
+
+  <section class="lk" id="lk">
+    <div class="lk-in">
+      <input type="text" id="lkIn" placeholder="ひらがな、またはローマ字（kyouiku）" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="調べる語" autofocus>
+      <button class="btn ghost sm" id="lkClear" type="button" aria-label="消す" hidden>×</button>
+    </div>
+    <div class="lk-opts">
+      <div class="seg"><div id="lkTable" class="table-seg"><button data-v="std">ローマ字</button><button data-v="azik">AZIK</button><button data-v="custom">カスタム</button></div></div>
+      <div class="seg"><div id="lkStyle"><button data-v="regular" title="同じ打鍵数なら標準ローマ字、なければ規則のそろった打ち方">規則的</button><button data-v="special" title="同じ打鍵数ならテーブル独自の、個別の規則">特殊</button></div></div>
+      <button class="btn ghost sm" id="lkPip" type="button" hidden title="ほかのアプリの上に浮かぶ小さなウィンドウで開きます（Chrome / Edge）">小窓で手前に</button>
+    </div>
+    <div class="lk-out" id="lkOut" aria-live="polite"></div>
+  </section>
+
+  <p class="lk-note">練習ページと同じテーブル・設定を使います（切り替えると練習ページにも反映されます）。IME をオフにしたまま標準ローマ字で打っても調べられます。下の小さな文字は、同じ打鍵数のほかの打ち方です。</p>
+</div>
+
+<script>
+  // ES modules do not load from file://; tell the user how to open the page instead.
+  if (location.protocol === 'file:') document.addEventListener('DOMContentLoaded', () => {
+    const d = document.createElement('div'); d.className = 'boot-error';
+    d.innerHTML = 'このページは HTTP サーバー経由で開いてください（例: フォルダで <code>python3 -m http.server</code> を実行して <code>http://localhost:8000/lookup.html</code>）。';
+    document.body.prepend(d);
+  });
+</script>
+<script type="module" src="js/lookup.js"></script>
+</body>
+</html>

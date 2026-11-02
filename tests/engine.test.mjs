@@ -137,3 +137,14 @@ test('alternatives per display unit: equally short and still finishing the word'
     }));
   }
 });
+
+test('romaji typed with the IME off is read as kana', async () => {
+  const { romajiToKana } = await import('../js/engine.js');
+  assert.equal(romajiToKana('kyouiku'), 'きょういく');
+  assert.equal(romajiToKana('konnnichiha'), 'こんにちは');
+  assert.equal(romajiToKana('hon'), 'ほん');
+  assert.equal(romajiToKana('ko-hi-'), 'こーひー');
+  assert.equal(romajiToKana('Gakkou'), 'がっこう');
+  assert.equal(romajiToKana('にゅうじょうけん'), 'にゅうじょうけん');
+  assert.equal(romajiToKana('カタカナ'), 'かたかな');
+});

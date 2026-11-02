@@ -1,0 +1,22 @@
+/* Lookup widget (lookup.html); also used inside the picture-in-picture window */
+.lk-wrap{max-width:720px}
+.lk{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px;min-width:0}
+.lk-in{display:flex;gap:8px;align-items:center}
+.lk-in input{font-size:1.15rem;padding:10px 12px;flex:1;min-width:0}
+.lk-opts{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.lk-out{display:grid;gap:12px;min-height:5rem;align-content:start}
+.lk-out .guide{justify-content:flex-start;font-size:1.35rem}
+.lk-row{display:grid;gap:4px;padding-bottom:10px;border-bottom:1px solid var(--grid)}
+.lk-row:last-child{border-bottom:0;padding-bottom:0}
+.lk-meta{font-size:.82rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+.lk-meta code{font-family:var(--mono);color:var(--ink);font-size:.95rem}
+.lk-meta.ng{color:var(--miss)}
+.lk-copy{font:inherit;font-size:.75rem;color:var(--muted);background:none;border:1px solid var(--line);border-radius:6px;padding:1px 8px;cursor:pointer}
+.lk-copy:hover{color:var(--ink)}
+.lk-empty{font-size:.85rem;color:var(--muted)}
+.lk-note{font-size:.8rem;color:var(--muted);margin:0}
+/* picture-in-picture: just the widget, edge to edge */
+body.lk-pip{padding:0;margin:0;background:var(--surface)}
+body.lk-pip .lk{border:0;border-radius:0;padding:10px 12px;gap:8px}
+body.lk-pip .lk-opts{display:none}
+body.lk-pip .lk-out .guide{font-size:1.2rem}

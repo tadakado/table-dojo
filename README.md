@@ -8,6 +8,7 @@ Google 日本語入力からエクスポートしたテーブルを読み込む�
 
 - 練習: `index.html`
 - 物理配置エディタ: `editor.html`（ZMK の `key_physical_attrs` を GUI で編集）
+- 打ち方を調べる: `lookup.html`（ひらがなを入れると、そのテーブルでの打ち方を表示）
 
 ## できること
 
@@ -76,6 +77,14 @@ GitHub の raw ファイルは最大5分ほどキャッシュされるので、p
 
 既定では [tk46v6b](https://github.com/tadakado/tk46v6b) を GitHub から取得して表示します。取得できないときは `keyboards/tk46v6b/` の同梱データを使います。
 
+### 打ち方を調べる
+
+`lookup.html` は、打ち方がわからなくなったときに引く小さなページです。ひらがな（または IME をオフにしたまま標準ローマ字で `kyouiku` のように）を入れると、選んでいるテーブルでの最短の打ち方を、確定単位とかな、同じ打鍵数のほかの打ち方付きで表示します。スペースや読点で区切ると複数の語をまとめて調べられます。`lookup.html?q=きょういく` のように語を渡して開くこともできます。
+
+- テーブル（ローマ字 / AZIK / カスタム）と「打ち方」の設定は練習ページと共通です。
+- Chrome / Edge（デスクトップ）では「小窓で手前に」で、ほかのアプリの上に浮かぶ小さなウィンドウにできます（Document Picture-in-Picture）。
+- iPhone ではホーム画面に追加しておくとすぐ開けます。
+
 ### 物理配置エディタ
 
 `editor.html` で dtsi を開くか、「Web から開く」に GitHub のリポジトリ名を入れて読み込み、キーをドラッグ・回転・左右鏡映・数値入力で編集して、`keys = …;` ブロックとして書き出します。回転は ZMK と同じく「(rx, ry) を中心に回す」表現のまま計算します。
@@ -95,7 +104,7 @@ python3 -m http.server 8000
 npm run build   # node tools/build-single.mjs
 ```
 
-`dist/table-dojo.html`（練習）と `dist/table-dojo-editor.html`（配置エディタ）ができます。CSS・JavaScript・js-yaml・単語リスト・AZIK テーブル・既定のキーボードをすべて1つの HTML に埋め込んであり、サーバーなしでファイルを直接開いて使えます（ネットにつながっていなくても動きます）。
+`dist/table-dojo.html`（練習）、`dist/table-dojo-editor.html`（配置エディタ）、`dist/table-dojo-lookup.html`（打ち方を調べる）ができます。CSS・JavaScript・js-yaml・単語リスト・AZIK テーブル・既定のキーボードをすべて1つの HTML に埋め込んであり、サーバーなしでファイルを直接開いて使えます（ネットにつながっていなくても動きます）。
 ネットにつながっていれば、フォントと、GitHub からのキーボード取得はそのまま使えます。設定はブラウザに保存されますが、Pages 版とは別のサイト扱いなので共有はされません。
 
 ## テスト
@@ -113,15 +122,18 @@ npm test        # node --test tests/*.test.mjs
 ```
 index.html              練習ページ
 editor.html             物理配置エディタ
+lookup.html             打ち方を調べる
 css/base.css            共通の色・フォント
 css/dojo.css            練習ページ
 css/editor.css          エディタ
+css/lookup.css          打ち方を調べる
 js/engine.js            IME シミュレータ・最短打鍵探索・テーブル/単語の読み込み（DOM 非依存）
 js/keyboard.js          自作キーボード（YAML + dtsi/SVG）の読み込みとキー探索
 js/remote.js            GitHub / URL からの取得（取得先の解決）
 js/version.js           バージョン表示（version.json）
 js/app.js               練習ページの画面と進行
 js/editor.js            エディタ
+js/lookup.js            打ち方を調べる
 words/basic.tsv         基本語彙
 tables/azik.tsv         AZIK テーブル（azooKey から変換）
 tools/                  azik-from-azookey.mjs（AZIK テーブルの変換）、build-single.mjs（単一ファイル版の生成）
