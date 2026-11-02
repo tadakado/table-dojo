@@ -1,6 +1,6 @@
 # テーブル打鍵道場 (table-dojo)
 
-**▶ https://tadakado.github.io/table-dojo/**（練習）・[配置エディタ](https://tadakado.github.io/table-dojo/editor.html)・[逆変換](https://tadakado.github.io/table-dojo/lookup.html)
+公開ページ: **[練習](https://tadakado.github.io/table-dojo/)** ／ [配置エディタ](https://tadakado.github.io/table-dojo/editor.html) ／ [逆変換](https://tadakado.github.io/table-dojo/lookup.html)
 
 AZIK などの**自分のローマ字テーブル**で練習するタイピング練習アプリです。
 Google 日本語入力からエクスポートしたテーブルを読み込むと、そのテーブルでの最短の打ち方をガイドしながら練習できます。
