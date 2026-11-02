@@ -15,8 +15,19 @@
 .lk-copy:hover{color:var(--ink)}
 .lk-empty{font-size:.85rem;color:var(--muted)}
 .lk-note{font-size:.8rem;color:var(--muted);margin:0}
-/* picture-in-picture: just the widget, edge to edge */
-body.lk-pip{padding:0;margin:0;background:var(--surface)}
-body.lk-pip .lk{border:0;border-radius:0;padding:10px 12px;gap:8px}
+/* picture-in-picture: just the widget, edge to edge, in smaller type */
+body.lk-pip{padding:0;margin:0;background:var(--surface);font-size:13px;line-height:1.45}
+body.lk-pip .lk{border:0;border-radius:0;padding:8px 10px;gap:6px}
 body.lk-pip .lk-opts{display:none}
-body.lk-pip .lk-out .guide{font-size:1.2rem}
+body.lk-pip .lk-in input{font-size:.95rem;padding:5px 8px;border-radius:6px}
+body.lk-pip .lk-in .btn.sm{padding:3px 9px}
+body.lk-pip .lk-out{gap:6px;min-height:0}
+body.lk-pip .lk-out .guide{font-size:.98rem;gap:2px 2px}
+body.lk-pip .ch{padding:1px 4px 2px}
+body.lk-pip .ch .a{font-size:.68rem}
+body.lk-pip .ch .alt{font-size:.78rem;margin-top:0}
+body.lk-pip .lk-row{gap:2px;padding-bottom:6px}
+body.lk-pip .lk-meta{font-size:.7rem;gap:2px 6px}
+body.lk-pip .lk-meta code{font-size:.8rem}
+body.lk-pip .lk-copy{font-size:.68rem;padding:0 6px}
+body.lk-pip .lk-empty{font-size:.75rem}

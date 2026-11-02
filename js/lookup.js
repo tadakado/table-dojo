@@ -108,7 +108,7 @@ if ('documentPictureInPicture' in window) {
   const btn = EL.lkPip, lk = EL.lk, home = lk.parentNode, next = lk.nextSibling;
   btn.hidden = false;
   btn.onclick = async () => {
-    const pip = await window.documentPictureInPicture.requestWindow({ width: 420, height: 260 });
+    const pip = await window.documentPictureInPicture.requestWindow({ width: 340, height: 230 });
     for (const sheet of document.styleSheets) {
       try {
         const st = pip.document.createElement('style');
