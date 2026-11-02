@@ -1,4 +1,4 @@
-// Show the deployed version (commit time in JST, e.g. 2026.10.30.2056).
+// Show the deployed version (commit date in JST and short hash, e.g. 2026.11.02.e372835).
 // version.json is written by the Pages workflow (.github/workflows/pages.yml) and by
 // tools/build-single.mjs; a local checkout has none and shows "dev".
 export async function showVersion(el) {

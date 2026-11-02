@@ -42,11 +42,11 @@ function bundle(entry) {
   }).join('\n\n');
 }
 
-/** Same format as the Pages workflow: commit time in JST, YYYY.MM.DD.HHMM (+"-dirty" with local changes). */
+/** Same format as the Pages workflow: commit date in JST and short hash, YYYY.MM.DD.<hash> (+"-dirty" with local changes). */
 function versionJson() {
   const git = cmd => execSync(`git ${cmd}`, { cwd: ROOT, env: { ...process.env, TZ: 'Asia/Tokyo' }, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
   try {
-    const version = git('log -1 --date=format-local:%Y.%m.%d.%H%M --format=%cd');
+    const version = git('log -1 --date=format-local:%Y.%m.%d --format=%cd') + '.' + git('rev-parse --short=7 HEAD');
     const commit = git('rev-parse HEAD');
     const dirty = git('status --porcelain --untracked-files=no') ? '-dirty' : '';
     const m = /github\.com[:/]([^/]+\/[^/.]+)/.exec(git('remote get-url origin'));
