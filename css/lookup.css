@@ -15,19 +15,16 @@
 .lk-copy:hover{color:var(--ink)}
 .lk-empty{font-size:.85rem;color:var(--muted)}
 .lk-note{font-size:.8rem;color:var(--muted);margin:0}
-/* picture-in-picture: just the widget, edge to edge, in smaller type */
-body.lk-pip{padding:0;margin:0;background:var(--surface);font-size:13px;line-height:1.45}
-body.lk-pip .lk{border:0;border-radius:0;padding:8px 10px;gap:6px}
-body.lk-pip .lk-opts{display:none}
-body.lk-pip .lk-in input{font-size:.95rem;padding:5px 8px;border-radius:6px}
-body.lk-pip .lk-in .btn.sm{padding:3px 9px}
-body.lk-pip .lk-out{gap:6px;min-height:0}
-body.lk-pip .lk-out .guide{font-size:.98rem;gap:2px 2px}
-body.lk-pip .ch{padding:1px 4px 2px}
-body.lk-pip .ch .a{font-size:.68rem}
-body.lk-pip .ch .alt{font-size:.78rem;margin-top:0}
-body.lk-pip .lk-row{gap:2px;padding-bottom:6px}
-body.lk-pip .lk-meta{font-size:.7rem;gap:2px 6px}
-body.lk-pip .lk-meta code{font-size:.8rem}
-body.lk-pip .lk-copy{font-size:.68rem;padding:0 6px}
-body.lk-pip .lk-empty{font-size:.75rem}
+/* picture-in-picture: the input and the guide only, no chrome */
+body.lk-pip{padding:0;margin:0;background:var(--surface);font-size:12px;line-height:1.3}
+body.lk-pip .lk{border:0;border-radius:0;padding:3px 4px;gap:3px}
+body.lk-pip .lk-opts,body.lk-pip .lk-meta,body.lk-pip #lkClear,body.lk-pip .lk-empty{display:none!important}
+body.lk-pip .lk-in input{font-size:.9rem;padding:2px 5px;border-radius:4px}
+body.lk-pip .lk-in input:focus-visible{outline:1px solid var(--accent);outline-offset:0}
+body.lk-pip .lk-out{gap:2px;min-height:0}
+body.lk-pip .lk-out .guide{font-size:.95rem;gap:0 1px}
+body.lk-pip .ch{padding:0 3px}
+body.lk-pip .ch .a{font-size:.65rem;line-height:1.1}
+body.lk-pip .ch .alt{font-size:.72rem;line-height:1.1;margin:0}
+body.lk-pip .lk-row{gap:0;padding:0 0 2px;border-bottom:1px solid var(--grid)}
+body.lk-pip .lk-row:last-child{border-bottom:0}
