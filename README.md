@@ -1,5 +1,7 @@
 # テーブル打鍵道場 (table-dojo)
 
+**▶ https://tadakado.github.io/table-dojo/**（練習）・[配置エディタ](https://tadakado.github.io/table-dojo/editor.html)・[逆変換](https://tadakado.github.io/table-dojo/lookup.html)
+
 AZIK などの**自分のローマ字テーブル**で練習するタイピング練習アプリです。
 Google 日本語入力からエクスポートしたテーブルを読み込むと、そのテーブルでの最短の打ち方をガイドしながら練習できます。
 自作キーボード（ZMK）の配列を読み込んで、次に押すキーをその配列の上に表示することもできます。
@@ -8,7 +10,7 @@ Google 日本語入力からエクスポートしたテーブルを読み込む�
 
 - 練習: `index.html`
 - 物理配置エディタ: `editor.html`（ZMK の `key_physical_attrs` を GUI で編集）
-- 打ち方を調べる: `lookup.html`（ひらがなを入れると、そのテーブルでの打ち方を表示）
+- 逆変換: `lookup.html`（ひらがなを入れると、そのテーブルでの打ち方を表示）
 
 ## できること
 
@@ -77,12 +79,12 @@ GitHub の raw ファイルは最大5分ほどキャッシュされるので、p
 
 既定では [tk46v6b](https://github.com/tadakado/tk46v6b) を GitHub から取得して表示します。取得できないときは `keyboards/tk46v6b/` の同梱データを使います。
 
-### 打ち方を調べる
+### 逆変換（打ち方を調べる）
 
-`lookup.html` は、打ち方がわからなくなったときに引く小さなページです。ひらがな（または IME をオフにしたまま標準ローマ字で `kyouiku` のように）を入れると、選んでいるテーブルでの最短の打ち方を、確定単位とかな、同じ打鍵数のほかの打ち方付きで表示します。スペースや読点で区切ると複数の語をまとめて調べられます。`lookup.html?q=きょういく` のように語を渡して開くこともできます。
+メニューの「逆変換」（`lookup.html`）は、打ち方がわからなくなったときに引く小さなページです。ひらがな（または IME をオフにしたまま標準ローマ字で `kyouiku` のように）を入れると、選んでいるテーブルでの最短の打ち方を、確定単位とかな、同じ打鍵数のほかの打ち方付きで表示します。スペースや読点で区切ると複数の語をまとめて調べられます。`lookup.html?q=きょういく` のように語を渡して開くこともできます。
 
 - テーブル（ローマ字 / AZIK / カスタム）と「打ち方」の設定は練習ページと共通です。
-- Chrome / Edge（デスクトップ）では「小窓で手前に」で、ほかのアプリの上に浮かぶ小さなウィンドウにできます（Document Picture-in-Picture）。
+- Chrome / Edge などのデスクトップ版では「小窓で手前に」で、ほかのアプリの上に浮かぶ小さなウィンドウ（180×80、`js/lookup.js` の `requestWindow`）にできます（Document Picture-in-Picture）。**Safari と iPhone は未対応**で、ボタンは表示されません（ページ自体は使えます）。
 - iPhone ではホーム画面に追加しておくとすぐ開けます。
 
 ### 物理配置エディタ
@@ -104,7 +106,7 @@ python3 -m http.server 8000
 npm run build   # node tools/build-single.mjs
 ```
 
-`dist/table-dojo.html`（練習）、`dist/table-dojo-editor.html`（配置エディタ）、`dist/table-dojo-lookup.html`（打ち方を調べる）ができます。CSS・JavaScript・js-yaml・単語リスト・AZIK テーブル・既定のキーボードをすべて1つの HTML に埋め込んであり、サーバーなしでファイルを直接開いて使えます（ネットにつながっていなくても動きます）。
+`dist/table-dojo.html`（練習）、`dist/table-dojo-editor.html`（配置エディタ）、`dist/table-dojo-lookup.html`（逆変換）ができます。CSS・JavaScript・js-yaml・単語リスト・AZIK テーブル・既定のキーボードをすべて1つの HTML に埋め込んであり、サーバーなしでファイルを直接開いて使えます（ネットにつながっていなくても動きます）。
 ネットにつながっていれば、フォントと、GitHub からのキーボード取得はそのまま使えます。設定はブラウザに保存されますが、Pages 版とは別のサイト扱いなので共有はされません。
 
 ## テスト
@@ -122,7 +124,7 @@ npm test        # node --test tests/*.test.mjs
 ```
 index.html              練習ページ
 editor.html             物理配置エディタ
-lookup.html             打ち方を調べる
+lookup.html             逆変換（打ち方を調べる）
 css/base.css            共通の色・フォント
 css/dojo.css            練習ページ
 css/editor.css          エディタ
